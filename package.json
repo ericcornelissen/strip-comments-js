@@ -1,0 +1,53 @@
+{
+  "name": "strip-directives",
+  "version": "1.0.0",
+  "description": "Strip directives (like eslint-disable-line) before you publish",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": "bin.js",
+  "main": "lib.js",
+  "engines": {
+    "node": "^24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/ericcornelissen/strip-directives.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/ericcornelissen/strip-directives/-/work_items"
+  },
+  "author": {
+    "name": "Eric Cornelissen",
+    "email": "ericornelissen@gmail.com",
+    "url": "https://ericcornelissen.dev/"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "bin.js",
+    "lib.js",
+    "main.js",
+    "package.json"
+  ],
+  "keywords": [
+    "strip",
+    "directive",
+    "directives",
+    "build",
+    "transpile",
+    "clean",
+    "minify"
+  ],
+  "scripts": {
+    "_prettier": "prettier '**/*.{js,md}'",
+    "check": "npm run _prettier -- --check && npm run test",
+    "format": "npm run _prettier -- --write",
+    "test": "node --test '*.test.js'",
+    "snapshots": "node --test --test-update-snapshots '*.test.js'"
+  },
+  "devDependencies": {
+    "fast-check": "4.6.0",
+    "prettier": "3.8.2"
+  }
+}
