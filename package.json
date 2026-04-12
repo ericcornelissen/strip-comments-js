@@ -40,7 +40,7 @@
     "minify"
   ],
   "scripts": {
-    "_prettier": "prettier '**/*.{js,md}'",
+    "_prettier": "prettier '**/*.{js,md,yml}'",
     "check": "npm run _prettier -- --check && npm run test",
     "format": "npm run _prettier -- --write",
     "test": "node --test '*.test.js'",

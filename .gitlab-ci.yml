@@ -1,0 +1,18 @@
+# Configuration file for Gitlab CI/CD (https://docs.gitlab.com/ci/)
+
+default:
+  cache: &npm_cache
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+
+check:
+  image: node:24.14.1
+  cache:
+    <<: *npm_cache
+  script:
+    - npm clean-install
+    - npm run check
+    - npm audit
