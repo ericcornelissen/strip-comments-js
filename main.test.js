@@ -5,6 +5,8 @@ import { test } from "node:test";
 
 import * as fc from "fast-check";
 
+import * as arb from "./arbitraries.js";
+
 import { strip } from "./main.js";
 
 const examples = [
@@ -29,69 +31,13 @@ for (const i in examples) {
 	});
 }
 
-const arb = {
-	whitespace: () => fc.string({ unit: fc.constantFrom(" ", "\t") }),
-	comment: {
-		any: (content) =>
-			fc.oneof(arb.comment.block(content), arb.comment.line(content)),
-		block: (content) =>
-			fc
-				.record({
-					content,
-					pre: arb.whitespace(),
-					start: arb.whitespace(),
-					end: arb.whitespace(),
-					post: arb.whitespace(),
-				})
-				.map(
-					({ pre, start, content, end, post }) =>
-						`${pre}/*${start}${content}${end}*/${post}`,
-				),
-		line: (content) =>
-			fc
-				.record({
-					content,
-					pre: arb.whitespace(),
-					start: arb.whitespace(),
-					end: arb.whitespace(),
-				})
-				.map(
-					({ pre, start, content, end }) =>
-						`${pre}//${start}${content}${end}\n`,
-				),
-	},
-	directive: {
-		eslint: () =>
-			fc.oneof(
-				arb.comment.block(fc.constantFrom("eslint-disable", "eslint-enable")),
-				arb.comment.any(
-					fc
-						.record({
-							directive: fc.constantFrom(
-								"eslint-disable-line",
-								"eslint-disable-next-line",
-							),
-							rules: fc.array(fc.stringMatching(/^ *[A-Za-z\-\/]+ *$/)),
-						})
-						.map(({ directive, rules }) => `${directive} ${rules.join(",")}`),
-				),
-			),
-		typeCoverage: () =>
-			arb.comment.any(
-				fc
-					.constantFrom("ignore-line", "ignore-next-line")
-					.map((directive) => `type-coverage:${directive}`),
-			),
-	},
-};
-
 test("eslint", () => {
 	fc.assert(
 		fc.property(
 			fc.record({
-				pre: fc.string().map((s) => s.trimEnd()),
+				pre: arb.javascript.program().map((s) => s.trimEnd()),
 				directive: arb.directive.eslint(),
-				post: fc.string().map((s) => s.trimStart()),
+				post: arb.javascript.program().map((s) => s.trimStart()),
 			}),
 			({ pre, directive, post }) => {
 				assert.match(
@@ -107,9 +53,9 @@ test("type-coverage", () => {
 	fc.assert(
 		fc.property(
 			fc.record({
-				pre: fc.string().map((s) => s.trimEnd()),
+				pre: arb.javascript.program().map((s) => s.trimEnd()),
 				directive: arb.directive.typeCoverage(),
-				post: fc.string().map((s) => s.trimStart()),
+				post: arb.javascript.program().map((s) => s.trimStart()),
 			}),
 			({ pre, directive, post }) => {
 				assert.match(
