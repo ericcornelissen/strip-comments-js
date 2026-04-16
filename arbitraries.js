@@ -2,12 +2,17 @@
 
 import * as fc from "fast-check";
 
-export const whitespace = () => fc.string({ unit: fc.constantFrom(" ", "\t") });
+const charsets = {
+	letters: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+	numeric: "1234567890".split(""),
+};
 
 const _checked =
 	(fn) =>
 	({ depth }) =>
 		depth > 1 ? fc.constant("") : fn({ depth });
+
+export const whitespace = () => fc.string({ unit: fc.constantFrom(" ", "\t") });
 
 export const comment = {
 	any: (content) => fc.oneof(comment.block(content), comment.line(content)),
@@ -239,10 +244,18 @@ export const javascript = {
 	identifier: {
 		any: () =>
 			fc
-				.oneof(
-					fc.stringMatching(/^[a-z]+$/),
-					fc.stringMatching(/^[a-zA-Z_$][a-zA-Z0-9_$]{0,16}$/),
+				.tuple(
+					fc.constantFrom(...charsets.letters, "_", "$"),
+					fc.string({
+						unit: fc.constantFrom(
+							...charsets.numeric,
+							...charsets.letters,
+							"_",
+							"$",
+						),
+					}),
 				)
+				.map(([a, b]) => `${a}${b}`)
 				.filter((ident) => !javascript.keywords.includes(ident)),
 	},
 
