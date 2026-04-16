@@ -1,6 +1,6 @@
 {
   "name": "strip-directives",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Strip directives (like eslint-disable-line) before you publish",
   "license": "Apache-2.0",
   "type": "module",

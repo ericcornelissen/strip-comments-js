@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+const strings = /"(?:\\"|[^"\n])*"|'(?:\\'|[^'\n])*'|`(?:\\`|[^`])*`/;
+
 const patterns = [
 	// eslint
 	blockComment(/eslint-(disable|enable)/),
@@ -11,7 +13,7 @@ const patterns = [
 
 export function strip(s) {
 	for (const pattern of patterns) {
-		s = s.replace(pattern, "");
+		s = s.replace(pattern, "$1");
 	}
 
 	return s;
@@ -20,15 +22,15 @@ export function strip(s) {
 function anyComment(regex) {
 	const line = lineComment(regex);
 	const block = blockComment(regex);
-	return new RegExp(`(${block.source}|${line.source})`, "g");
+	return new RegExp(`(?:${block.source}|${line.source})`, "g");
 }
 
 function lineComment(regex) {
-	const pattern = `(?<![ \t])\n?[ \t]*//[ \t]*${regex.source}[^\n]*(?=\n|$)`;
+	const pattern = `(${strings.source})|(?<![ \t])\n?[ \t]*//[ \t]*${regex.source}[^\n]*(?=\n|$)`;
 	return new RegExp(pattern, "g");
 }
 
 function blockComment(regex) {
-	const pattern = `(?<![ \t])\n?[ \t]*/\\*[ \t]*${regex.source}(\\*[^/]|[^*])*\\*/[ \t]*`;
+	const pattern = `(${strings.source})|(?<![ \t])\n?[ \t]*/\\*[ \t]*${regex.source}(\\*[^/]|[^*])*\\*/[ \t]*`;
 	return new RegExp(pattern, "g");
 }

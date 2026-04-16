@@ -213,11 +213,11 @@ export const javascript = {
 			fc.oneof(
 				fc
 					.string()
-					.filter((s) => !/(?!\\)'/.test(s))
+					.filter((s) => !/(?!\\)'|\\$/.test(s))
 					.map((s) => `'${s}'`),
 				fc
 					.string()
-					.filter((s) => !/(?!\\)"/.test(s))
+					.filter((s) => !/(?!\\)"|\\$/.test(s))
 					.map((s) => `"${s}"`),
 				fc
 					.record({
@@ -226,9 +226,9 @@ export const javascript = {
 							.array(
 								fc
 									.record({
-										pre: fc.string().filter((s) => !/(?!\\)`|\\$/.test(s)),
+										pre: fc.string(),
 										expression: javascript.expression.any({ depth: depth + 1 }),
-										post: fc.string().filter((s) => !/(?!\\)`/.test(s)),
+										post: fc.string(),
 									})
 									.map(
 										({ pre, expression, post }) =>
@@ -236,6 +236,7 @@ export const javascript = {
 									),
 								{ maxLength: 3 },
 							)
+							.filter((s) => !/(?!\\)`|\\$/.test(s))
 							.map((s) => `\`${s}\``),
 					})
 					.map(({ tagFunction, text }) => `${tagFunction}${text}`),
