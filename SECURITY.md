@@ -2,7 +2,7 @@
 
 # Security Policy
 
-All security issues in `strip-directives` should be reported publicly as bugs.
+All security issues in `strip-comments-js` should be reported publicly as bugs.
 Private reports will be made public by the maintainers after 7 days with
 best-effort attribution. Nevertheless, we will acknowledge security audits and
 publish vulnerability advisories for legitimate vulnerabilities.

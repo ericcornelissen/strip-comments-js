@@ -2,8 +2,8 @@
 
 // SPDX-License-Identifier: Apache-2.0
 
-import * as console from "node:console";
-import { argv, exit } from "node:process";
+import { readFile, writeFile } from "node:fs/promises";
+import { argv } from "node:process";
 import { debuglog } from "node:util";
 
 delete Object.prototype.__proto__;
@@ -11,13 +11,26 @@ Object.freeze(Object.prototype);
 Object.freeze(Array.prototype);
 Object.freeze(globalThis);
 
-const { stripFilesDirectives } = await import("./lib.js");
-try {
-	const debug = debuglog("strip-directives");
-	const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
-	await stripFilesDirectives(files, debug);
-	exit(0);
-} catch (error) {
-	console.error(error);
-	exit(1);
-}
+const { stripComments } = await import("./lib.js");
+
+const debug = debuglog("strip-comments-js");
+const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
+
+debug("received %d file(s) to strip", files.length);
+const promises = files.map(async (file) => {
+	debug("reading '%s'", file);
+	const content = await readFile(file, { encoding: "utf-8" });
+
+	debug("stripping comments from '%s' (length: %d)", file, content.length);
+	const stripped = stripComments(content);
+
+	if (content !== stripped) {
+		debug("writing stripped file '%s' (length: %d)", file, stripped.length);
+		await writeFile(file, stripped, { encoding: "utf-8" });
+	} else {
+		debug("not writing '%s', identical after stripping", file);
+	}
+});
+
+await Promise.all(promises);
+debug("finished stripping");

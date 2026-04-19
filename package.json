@@ -1,20 +1,22 @@
 {
-  "name": "strip-directives",
-  "version": "1.0.2",
-  "description": "Strip directives (like eslint-disable-line) before you publish",
+  "name": "strip-comments-js",
+  "version": "1.0.0",
+  "description": "Strip comments from JavaScript files",
   "license": "Apache-2.0",
   "type": "module",
-  "bin": "bin.js",
+  "bin": {
+    "strip-comments-js": "bin.js"
+  },
   "main": "lib.js",
   "engines": {
     "node": "^24"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/ericcornelissen/strip-directives.git"
+    "url": "git+https://gitlab.com/ericcornelissen/strip-comments-js.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/ericcornelissen/strip-directives/-/work_items"
+    "url": "https://gitlab.com/ericcornelissen/strip-comments-js/-/work_items"
   },
   "author": {
     "name": "Eric Cornelissen",
@@ -32,8 +34,8 @@
   ],
   "keywords": [
     "strip",
-    "directive",
-    "directives",
+    "comment",
+    "comments",
     "build",
     "transpile",
     "clean",

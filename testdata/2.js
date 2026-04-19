@@ -1,3 +1,3 @@
 var x;
-// eslint-disable-next-line no-undefined
+// Hello world!
 var y;

@@ -1,7 +1,7 @@
 var x;
 
-/* eslint-disable */
+/* this is a good/excellent comment */
 var y;
-/* eslint-enable */
+/* this is a sh*t comment */
 
 var z;

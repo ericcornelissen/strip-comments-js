@@ -1,14 +1,13 @@
 <!-- SPDX-License-Identifier: CC0-1.0 -->
 
-# strip-directives
+# strip-comments-js
 
-Strip directives (like `eslint-disable-line`) from your code to clean a package
-before it is published.
+Strip comments from JavaScript files
 
 ## Install
 
 ```shell
-npm install strip-directives
+npm install strip-comments-js
 ```
 
 ## Usage
@@ -16,27 +15,23 @@ npm install strip-directives
 ### CLI
 
 ```shell
-strip-directives file-1.js file-2.js
+strip-comments-js file-1.js file-2.js
 ```
 
 ### API
 
 ```javascript
-import { stripDirectives } from "strip-directives";
+import { stripComments } from "strip-comments-js";
 
-stripDirectives("var x = y == z; // eslint-disable-line eqeqeq");
+stripComments("var x = y == z; // This checks if Y is equal to Z");
 //=> "var x = y == z;"
 ```
 
-## Support
+## Related
 
-Directives from the following tooling is supported:
+- [strip-directives]
 
-- [ESLint]
-- [type-coverage]
-
-[eslint]: https://eslint.org/
-[type-coverage]: https://www.npmjs.com/package/type-coverage
+[strip-directives]: https://www.npmjs.com/package/strip-directives
 
 ## License
 
