@@ -1,6 +1,6 @@
 {
   "name": "strip-comments-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Strip comments from JavaScript files",
   "license": "Apache-2.0",
   "type": "module",

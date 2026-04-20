@@ -1,0 +1,4 @@
+const language = read();
+const msg = `Hello ${
+	language === "SE" ? "värld" : "world"
+}`;

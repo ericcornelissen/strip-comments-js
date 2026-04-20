@@ -30,33 +30,53 @@ test("examples", async () => {
 	}
 });
 
-test("eslint", () => {
+test("carriage return-line feed", async () => {
+	const testdata = {
+		"LF after line comment": ["var x;// foo\nvar y;", "var x;\nvar y;"],
+		"LF before line comment": ["var x;\n// foo", "var x;"],
+		"LF after block comment": ["var x;/*foo*/\nvar y;", "var x;\nvar y;"],
+		"LF before block comment": ["var x;\n/*foo*/", "var x;"],
+		"CRLF after line comment": ["var x;// foo\r\nvar y;", "var x;\r\nvar y;"],
+		"CRLF before line comment": ["var x;\r\n// foo", "var x;"],
+		"CRLF after block comment": ["var x;/*foo*/\r\nvar y;", "var x;\r\nvar y;"],
+		"CRLF before block comment": ["var x;\r\n/*foo*/", "var x;"],
+	};
+
+	for (const [name, [inp, want]] of Object.entries(testdata)) {
+		await test(name, async () => {
+			assert.equal(strip(inp), want);
+		});
+	}
+});
+
+test("idempotent", () => {
 	fc.assert(
 		fc.property(
 			fc.record({
 				pre: arb.javascript.program().map((s) => s.trimEnd()),
-				directive: arb.directive.eslint(),
+				comment: arb.comment.any(),
 				post: arb.javascript.program().map((s) => s.trimStart()),
 			}),
-			({ pre, directive, post }) => {
-				const code = `${pre}${directive}${post}`;
-				return strip(code).length < code.length;
+			({ pre, comment, post }) => {
+				const code = `${pre}${comment}${post}`;
+				const stripped = strip(code);
+				assert.equal(stripped, strip(stripped));
 			},
 		),
 	);
 });
 
-test("type-coverage", () => {
+test("input-output length", () => {
 	fc.assert(
 		fc.property(
 			fc.record({
 				pre: arb.javascript.program().map((s) => s.trimEnd()),
-				directive: arb.directive.typeCoverage(),
+				comment: arb.comment.any(),
 				post: arb.javascript.program().map((s) => s.trimStart()),
 			}),
-			({ pre, directive, post }) => {
-				const code = `${pre}${directive}${post}`;
-				return strip(code).length < code.length;
+			({ pre, comment, post }) => {
+				const code = `${pre}${comment}${post}`;
+				assert.ok(strip(code).length < code.length, code);
 			},
 		),
 	);

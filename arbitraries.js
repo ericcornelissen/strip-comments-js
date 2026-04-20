@@ -19,7 +19,7 @@ export const comment = {
 	block: (content) =>
 		fc
 			.record({
-				content,
+				content: content || fc.string().filter((s) => !s.includes("*/")),
 				pre: whitespace(),
 				start: whitespace(),
 				end: whitespace(),
@@ -32,7 +32,7 @@ export const comment = {
 	line: (content) =>
 		fc
 			.record({
-				content,
+				content: content || fc.string().filter((s) => !s.includes("\n")),
 				pre: whitespace(),
 				start: whitespace(),
 				end: whitespace(),
@@ -40,30 +40,6 @@ export const comment = {
 			.map(
 				({ pre, start, content, end }) => `${pre}//${start}${content}${end}\n`,
 			),
-};
-
-export const directive = {
-	eslint: () =>
-		fc.oneof(
-			comment.block(fc.constantFrom("eslint-disable", "eslint-enable")),
-			comment.any(
-				fc
-					.record({
-						directive: fc.constantFrom(
-							"eslint-disable-line",
-							"eslint-disable-next-line",
-						),
-						rules: fc.array(fc.stringMatching(/^ *[A-Za-z\-\/]+ *$/)),
-					})
-					.map(({ directive, rules }) => `${directive} ${rules.join(",")}`),
-			),
-		),
-	typeCoverage: () =>
-		comment.any(
-			fc
-				.constantFrom("ignore-line", "ignore-next-line")
-				.map((directive) => `type-coverage:${directive}`),
-		),
 };
 
 export const javascript = {
@@ -236,7 +212,7 @@ export const javascript = {
 									),
 								{ maxLength: 3 },
 							)
-							.filter((s) => !/(?!\\)`|\\$/.test(s))
+							.filter((s) => !/(?!\\)`|(?!\\)\$|\\$/.test(s))
 							.map((s) => `\`${s}\``),
 					})
 					.map(({ tagFunction, text }) => `${tagFunction}${text}`),
