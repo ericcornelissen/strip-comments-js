@@ -4,10 +4,10 @@
   "description": "Strip comments from JavaScript files",
   "license": "Apache-2.0",
   "type": "module",
+  "main": "lib.js",
   "bin": {
     "strip-comments-js": "bin.js"
   },
-  "main": "lib.js",
   "engines": {
     "node": "^24"
   },
@@ -23,15 +23,6 @@
     "email": "ericornelissen@gmail.com",
     "url": "https://ericcornelissen.dev/"
   },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "SECURITY.md",
-    "bin.js",
-    "lib.js",
-    "main.js",
-    "package.json"
-  ],
   "keywords": [
     "strip",
     "comment",
@@ -41,6 +32,19 @@
     "clean",
     "minify"
   ],
+  "files": [
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "bin.js",
+    "lib.js",
+    "main.js",
+    "package.json"
+  ],
+  "devDependencies": {
+    "fast-check": "4.6.0",
+    "prettier": "3.8.2"
+  },
   "scripts": {
     "_prettier": "prettier '**/*.{js,md,yml}'",
     "check": "npm run _prettier -- --check && npm run test",
@@ -48,9 +52,5 @@
     "test": "npm run test:unit && npm run test:bin",
     "test:bin": "node --test 'bin.test.js'",
     "test:unit": "node --test 'main.test.js'"
-  },
-  "devDependencies": {
-    "fast-check": "4.6.0",
-    "prettier": "3.8.2"
   }
 }

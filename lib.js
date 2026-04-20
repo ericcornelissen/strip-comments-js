@@ -5,9 +5,9 @@ import { strip } from "./main.js";
 /**
  * Strip the comments from a string.
  *
- * @param {string} s The string to strip comments from.
+ * @param {string} code The code to strip comments from.
  * @param {RegExp} [expr] The pattern of comments to strip.
  */
-export function stripComments(s, expr) {
-	return strip(s, expr);
+export function stripComments(code, expr) {
+	return strip(code, expr);
 }

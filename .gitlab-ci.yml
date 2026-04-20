@@ -9,7 +9,7 @@ default:
       - node_modules/
 
 check:
-  image: node:24.14.1
+  image: node:24.15.0
   cache:
     <<: *npm_cache
   script:

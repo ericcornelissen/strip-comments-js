@@ -2,7 +2,7 @@
 
 # strip-comments-js
 
-Strip comments from JavaScript files
+Strip comments from JavaScript files.
 
 ## Install
 

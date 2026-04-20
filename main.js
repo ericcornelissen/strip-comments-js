@@ -9,12 +9,12 @@ const S_STRING_BACK = 5;
 
 const any = /^.?/;
 
-export function strip(s, expr = any) {
+export function strip(code, expr = any) {
 	if (!(expr instanceof RegExp)) throw new Error("expr must be a RegExp");
 
 	const result = [];
 
-	const chars = new Queue(s + "\n");
+	const chars = new Queue(code + "\n");
 	const stack = new Stack(S_CODE);
 	const comment = [];
 

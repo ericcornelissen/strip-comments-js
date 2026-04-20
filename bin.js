@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFile, writeFile } from "node:fs/promises";
-import { argv } from "node:process";
+import { argv, exit, stderr } from "node:process";
 import { debuglog } from "node:util";
 
 delete Object.prototype.__proto__;
@@ -15,14 +15,23 @@ const { stripComments } = await import("./lib.js");
 
 const debug = debuglog("strip-comments-js");
 const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
+let code = 0;
 
+debug("parsing CLI flags");
 const idx = files.indexOf("--pattern");
 const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
 
 debug("received %d file(s) to strip", files.length);
 const promises = files.map(async (file) => {
 	debug("reading '%s'", file);
-	const content = await readFile(file, { encoding: "utf-8" });
+	let content;
+	try {
+		content = await readFile(file, { encoding: "utf-8" });
+	} catch (error) {
+		code = 1;
+		stderr.write(error.message + "\n");
+		return;
+	}
 
 	debug("stripping comments from '%s' (length: %d)", file, content.length);
 	const stripped = stripComments(content, pattern);
@@ -37,3 +46,4 @@ const promises = files.map(async (file) => {
 
 await Promise.all(promises);
 debug("finished stripping");
+exit(code);
