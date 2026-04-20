@@ -30,7 +30,7 @@ test("examples", async () => {
 	}
 });
 
-test("carriage return-line feed", async () => {
+test("newlines", async () => {
 	const testdata = {
 		"LF after line comment": ["var x;// foo\nvar y;", "var x;\nvar y;"],
 		"LF before line comment": ["var x;\n// foo", "var x;"],
@@ -40,13 +40,57 @@ test("carriage return-line feed", async () => {
 		"CRLF before line comment": ["var x;\r\n// foo", "var x;"],
 		"CRLF after block comment": ["var x;/*foo*/\r\nvar y;", "var x;\r\nvar y;"],
 		"CRLF before block comment": ["var x;\r\n/*foo*/", "var x;"],
+		"line comment without final newline": ["var x; // foo", "var x;"],
+		"block comment without final newline": ["var x; /* foo */", "var x;"],
 	};
 
 	for (const [name, [inp, want]] of Object.entries(testdata)) {
-		await test(name, async () => {
+		await test(name, () => {
 			assert.equal(strip(inp), want);
 		});
 	}
+});
+
+test("pattern", async () => {
+	const testdata = {
+		"pattern does match line comment": {
+			pattern: /foo.+/,
+			inp: "var x = y; // foobar\n",
+			want: "var x = y;\n",
+		},
+		"pattern does match block comment": {
+			pattern: /foo.+/,
+			inp: "var x = /* foobar */ y;",
+			want: "var x = y;",
+		},
+		"pattern doesn't match line comment": {
+			pattern: /foobar/,
+			inp: "var x = y; // foobaz",
+			want: "var x = y; // foobaz",
+		},
+		"pattern doesn't match block comment": {
+			pattern: /foobar/,
+			inp: "var x = /* foobaz */ y;",
+			want: "var x = /* foobaz */ y;",
+		},
+	};
+
+	for (const [name, testCase] of Object.entries(testdata)) {
+		await test(name, () => {
+			assert.equal(strip(testCase.inp, testCase.pattern), testCase.want);
+		});
+	}
+
+	await test("no pattern", () => {
+		assert.doesNotThrow(() => strip("this is fine"));
+	});
+
+	await test("not a regexp", () => {
+		const cases = [true, 42, 3.14, 9001n, "string", [], {}];
+		for (const v of cases) {
+			assert.throws(() => strip("this is not fine", v));
+		}
+	});
 });
 
 test("idempotent", () => {

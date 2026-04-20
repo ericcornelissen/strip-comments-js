@@ -16,13 +16,16 @@ const { stripComments } = await import("./lib.js");
 const debug = debuglog("strip-comments-js");
 const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
 
+const idx = files.indexOf("--pattern");
+const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
+
 debug("received %d file(s) to strip", files.length);
 const promises = files.map(async (file) => {
 	debug("reading '%s'", file);
 	const content = await readFile(file, { encoding: "utf-8" });
 
 	debug("stripping comments from '%s' (length: %d)", file, content.length);
-	const stripped = stripComments(content);
+	const stripped = stripComments(content, pattern);
 
 	if (content !== stripped) {
 		debug("writing stripped file '%s' (length: %d)", file, stripped.length);

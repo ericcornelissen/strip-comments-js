@@ -12,16 +12,33 @@ for (const file of await fs.readdir("testdata")) {
 	testdata[file] = path.resolve("testdata", file);
 }
 
-for (const [file, filepath] of Object.entries(testdata)) {
-	test(file, async () => {
-		const before = await fs.readFile(filepath);
+test("regular usage", async () => {
+	for (const [file, filepath] of Object.entries(testdata)) {
+		await test(file, async () => {
+			const before = await fs.readFile(filepath);
 
-		spawnSync("./bin.js", [filepath]);
+			spawnSync("./bin.js", [filepath]);
 
-		const got = await fs.readFile(filepath);
-		const want = await fs.readFile(filepath.replace(".js", ".want"));
-		fs.writeFile(filepath, before);
+			const got = await fs.readFile(filepath);
+			const want = await fs.readFile(filepath.replace(".js", ".want"));
+			fs.writeFile(filepath, before);
 
-		assert.deepEqual(got, want);
-	});
-}
+			assert.deepEqual(got, want);
+		});
+	}
+});
+
+test("--pattern", async () => {
+	for (const [file, filepath] of Object.entries(testdata)) {
+		await test(file, async () => {
+			const before = await fs.readFile(filepath);
+
+			spawnSync("./bin.js", ["--pattern", "won't match", filepath]);
+
+			const got = await fs.readFile(filepath);
+			fs.writeFile(filepath, before);
+
+			assert.deepEqual(got, before);
+		});
+	}
+});

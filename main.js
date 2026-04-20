@@ -7,15 +7,23 @@ const S_STRING_SINGLE = 3;
 const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 
-export function strip(s) {
+const any = /^.?/;
+
+export function strip(s, expr = any) {
+	if (!(expr instanceof RegExp)) throw new Error("expr must be a RegExp");
+
 	const result = [];
 
-	const chars = new Queue(s);
+	const chars = new Queue(s + "\n");
 	const stack = new Stack(S_CODE);
+	const comment = [];
+
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		const state = stack.peek();
+
 		if (!inComment(state)) result.push(char);
+		else comment.push(char);
 
 		switch (char) {
 			case "{": {
@@ -38,42 +46,40 @@ export function strip(s) {
 					if (startLineComment) stack.push(S_LINE_COMMENT);
 					else if (startBlockComment) stack.push(S_BLOCK_COMMENT);
 
-					if (startLineComment || startBlockComment) {
-						// Omit current '/'
-						result.pop();
-
-						// Remove leading whitespace
-						for (let i = result.length - 1; i > 0; i--) {
-							const cur = result[i];
-							if (/\s/.test(cur)) {
-								result.pop();
-							} else {
-								break;
-							}
-
-							if (cur === "\n") {
-								if (result[i - 1] === "\r") result.pop();
-								break;
-							}
-						}
-					}
+					if (startLineComment || startBlockComment) result.pop();
 				}
 
 				break;
 			}
 			case "*": {
 				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
+					const content = comment.slice(1, comment.length - 1).join("");
+					if (expr.test(content)) {
+						trimEnd(result);
+						chars.next();
+					} else {
+						result.push("/", ...comment);
+					}
+
 					stack.pop();
-					chars.next();
+					comment.length = 0;
 				}
 
 				break;
 			}
 			case "\n": {
 				if (state === S_LINE_COMMENT) {
+					const content = comment.slice(1, comment.length - 1).join("");
+					if (expr.test(content)) {
+						trimEnd(result);
+						if (chars.prev() === "\r") result.push("\r");
+						result.push("\n");
+					} else {
+						result.push("/", ...comment);
+					}
+
 					stack.pop();
-					if (chars.prev() === "\r") result.push("\r");
-					result.push("\n");
+					comment.length = 0;
 				}
 
 				break;
@@ -111,6 +117,7 @@ export function strip(s) {
 		}
 	}
 
+	result.length--;
 	return result.join("");
 }
 
@@ -124,6 +131,22 @@ function inString(state) {
 		state === S_STRING_DOUBLE ||
 		state === S_STRING_BACK
 	);
+}
+
+function trimEnd(result) {
+	for (let i = result.length - 1; i > 0; i--) {
+		const cur = result[i];
+		if (/\s/.test(cur)) {
+			result.pop();
+		} else {
+			break;
+		}
+
+		if (cur === "\n") {
+			if (result[i - 1] === "\r") result.pop();
+			break;
+		}
+	}
 }
 
 class Stack {

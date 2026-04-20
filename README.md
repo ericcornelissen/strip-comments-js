@@ -18,13 +18,20 @@ npm install strip-comments-js
 strip-comments-js file-1.js file-2.js
 ```
 
+```shell
+strip-comments-js --pattern eslint-disable file-1.js file-2.js
+```
+
 ### API
 
 ```javascript
 import { stripComments } from "strip-comments-js";
 
-stripComments("var x = y == z; // This checks if Y is equal to Z");
-//=> "var x = y == z;"
+stripComments("var unicorns = false; // Only horses");
+//=> "var unicorns = false;"
+
+stripComments("var unicorns = false; // Only horses", /unicorn/);
+//=> "var unicorns = false; // Only horses"
 ```
 
 ## Related
