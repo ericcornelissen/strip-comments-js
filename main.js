@@ -7,10 +7,8 @@ const S_STRING_SINGLE = 3;
 const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 
-const any = /^.?/;
-
-export function strip(code, expr = any) {
-	if (!(expr instanceof RegExp)) throw new Error("expr must be a RegExp");
+export function strip(code, { pattern, line, block }) {
+	if (!(pattern instanceof RegExp)) throw new Error("expr must be a RegExp");
 
 	const result = [];
 
@@ -54,7 +52,7 @@ export function strip(code, expr = any) {
 			case "*": {
 				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
 					const content = comment.slice(1, comment.length - 1).join("");
-					if (expr.test(content)) {
+					if (block && pattern.test(content)) {
 						trimEnd(result);
 						chars.next();
 					} else {
@@ -70,7 +68,7 @@ export function strip(code, expr = any) {
 			case "\n": {
 				if (state === S_LINE_COMMENT) {
 					const content = comment.slice(1, comment.length - 1).join("");
-					if (expr.test(content)) {
+					if (line && pattern.test(content)) {
 						trimEnd(result);
 						if (chars.prev() === "\r") result.push("\r");
 						result.push("\n");
