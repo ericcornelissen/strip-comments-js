@@ -1,18 +1,34 @@
 # Configuration file for Gitlab CI/CD (https://docs.gitlab.com/ci/)
 
-default:
-  cache: &npm_cache
+stages:
+  - test
+  - publish
+
+variables:
+  NODE: 24.14.1
+
+check:
+  stage: test
+  image: node:${NODE}
+  cache:
     key:
       files:
         - package-lock.json
     paths:
       - node_modules/
-
-check:
-  image: node:24.15.0
-  cache:
-    <<: *npm_cache
   script:
     - npm clean-install
     - npm run check
-    - npm audit
+
+publish:
+  stage: publish
+  image: node:${NODE}
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  id_tokens:
+    NPM_ID_TOKEN:
+      aud: npm:registry.npmjs.org
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  script:
+    - npm publish || true
