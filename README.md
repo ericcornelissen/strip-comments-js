@@ -30,9 +30,25 @@ import { stripComments } from "strip-comments-js";
 stripComments("var unicorns = false; // Only horses");
 //=> "var unicorns = false;"
 
-stripComments("var unicorns = false; // Only horses", /unicorn/);
+stripComments("var unicorns = false; // Only horses", { pattern: /unicorn/ });
+//=> "var unicorns = false; // Only horses"
+
+stripComments("var unicorns = false; // Only horses", { pattern: /horses/ });
+//=> "var unicorns = false;"
+
+stripComments("var unicorns = false; // Only horses", { line: false });
 //=> "var unicorns = false; // Only horses"
 ```
+
+#### Options
+
+`stripComments(code, [options])`
+
+- `pattern`: The pattern of comments to strip. By default all comments are
+  stripped.
+- `block`: Whether to strip block comments. By default block comments are
+  stripped.
+- `line`: Whether to strip line comments. By default line comments are stripped.
 
 ## Related
 
