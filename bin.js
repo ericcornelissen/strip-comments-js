@@ -18,8 +18,17 @@ const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
 let code = 0;
 
 debug("parsing CLI flags");
-const idx = files.indexOf("--pattern");
+let idx = files.indexOf("--pattern");
 const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
+
+idx = files.indexOf("--keep-block");
+const block = idx === -1 ? undefined : !files.splice(idx, 1);
+
+idx = files.indexOf("--keep-line");
+const line = idx === -1 ? undefined : !files.splice(idx, 1);
+
+const options = { pattern, block, line };
+debug("finished parsing CLI flags, got", options);
 
 debug("received %d file(s) to strip", files.length);
 const promises = files.map(async (file) => {
@@ -34,7 +43,7 @@ const promises = files.map(async (file) => {
 	}
 
 	debug("stripping comments from '%s' (length: %d)", file, content.length);
-	const stripped = stripComments(content, pattern);
+	const stripped = stripComments(content, options);
 
 	if (content !== stripped) {
 		debug("writing stripped file '%s' (length: %d)", file, stripped.length);

@@ -11,7 +11,13 @@ import * as arb from "./arbitraries.js";
 
 import { strip } from "./main.js";
 
-test("examples", async () => {
+test("testdata", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		line: true,
+	};
+
 	const testdata = {};
 	for (const file of await fs.readdir("testdata")) {
 		if (!file.endsWith(".js")) continue;
@@ -22,7 +28,7 @@ test("examples", async () => {
 		const wantpath = filepath.replace(".js", ".want");
 		await test(file, async () => {
 			const inp = await fs.readFile(filepath, { encoding: "utf-8" });
-			const got = strip(inp);
+			const got = strip(inp, options);
 			const want = await fs.readFile(wantpath, { encoding: "utf-8" });
 
 			assert.equal(got, want);
@@ -31,6 +37,12 @@ test("examples", async () => {
 });
 
 test("newlines", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		line: true,
+	};
+
 	const testdata = {
 		"LF after line comment": ["var x;// foo\nvar y;", "var x;\nvar y;"],
 		"LF before line comment": ["var x;\n// foo", "var x;"],
@@ -46,12 +58,17 @@ test("newlines", async () => {
 
 	for (const [name, [inp, want]] of Object.entries(testdata)) {
 		await test(name, () => {
-			assert.equal(strip(inp), want);
+			assert.equal(strip(inp, options), want);
 		});
 	}
 });
 
 test("pattern", async () => {
+	const defaultOptions = {
+		block: true,
+		line: true,
+	};
+
 	const testdata = {
 		"pattern does match line comment": {
 			pattern: /foo.+/,
@@ -77,23 +94,125 @@ test("pattern", async () => {
 
 	for (const [name, testCase] of Object.entries(testdata)) {
 		await test(name, () => {
-			assert.equal(strip(testCase.inp, testCase.pattern), testCase.want);
+			const options = {
+				...defaultOptions,
+				pattern: testCase.pattern,
+			};
+
+			assert.equal(strip(testCase.inp, options), testCase.want);
 		});
 	}
-
-	await test("no pattern", () => {
-		assert.doesNotThrow(() => strip("this is fine"));
-	});
 
 	await test("not a regexp", () => {
 		const cases = [true, 42, 3.14, 9001n, "string", [], {}];
 		for (const v of cases) {
-			assert.throws(() => strip("this is not fine", v));
+			const options = {
+				...defaultOptions,
+				pattern: v,
+			};
+
+			assert.throws(() => strip("this is not fine", options));
 		}
 	});
 });
 
-test("idempotent", () => {
+test("preserve block comments", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: false,
+		line: true,
+	};
+
+	await test("any block comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment.block(),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.equal(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("any line comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment.line(),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.notEqual(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("pathological input", () => {
+		const code = `/* // foobar */`;
+		assert.equal(strip(code, options), code);
+	});
+});
+
+test("preserve line comments", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		line: false,
+	};
+
+	await test("any line comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment.line(),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.equal(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("any block comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment.block(),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.notEqual(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("pathological input", () => {
+		const code = `// /* foobar */`;
+		assert.equal(strip(code, options), code);
+	});
+});
+
+test("input-output length", () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		line: true,
+	};
+
 	fc.assert(
 		fc.property(
 			fc.record({
@@ -103,14 +222,19 @@ test("idempotent", () => {
 			}),
 			({ pre, comment, post }) => {
 				const code = `${pre}${comment}${post}`;
-				const stripped = strip(code);
-				assert.equal(stripped, strip(stripped));
+				assert.ok(strip(code, options).length < code.length);
 			},
 		),
 	);
 });
 
-test("input-output length", () => {
+test("idempotent", () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		line: true,
+	};
+
 	fc.assert(
 		fc.property(
 			fc.record({
@@ -120,7 +244,9 @@ test("input-output length", () => {
 			}),
 			({ pre, comment, post }) => {
 				const code = `${pre}${comment}${post}`;
-				assert.ok(strip(code).length < code.length, code);
+				const got = strip(code, options);
+				const want = strip(got, options);
+				assert.equal(got, want);
 			},
 		),
 	);

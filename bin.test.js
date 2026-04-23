@@ -23,7 +23,7 @@ test("regular usage", async () => {
 			const want = await fs.readFile(filepath.replace(".js", ".want"));
 			fs.writeFile(filepath, before);
 
-			assert.deepEqual(got, want);
+			assert.deepEqual(got.toString(), want.toString());
 		});
 	}
 });
@@ -38,7 +38,7 @@ test("--pattern", async () => {
 			const got = await fs.readFile(filepath);
 			fs.writeFile(filepath, before);
 
-			assert.deepEqual(got, before);
+			assert.deepEqual(got.toString(), before.toString());
 		});
 	}
 });
