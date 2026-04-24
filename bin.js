@@ -24,10 +24,13 @@ const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
 idx = files.indexOf("--keep-block");
 const block = idx === -1 ? undefined : !files.splice(idx, 1);
 
+idx = files.indexOf("--keep-jsdoc");
+const jsdoc = idx === -1 ? undefined : !files.splice(idx, 1);
+
 idx = files.indexOf("--keep-line");
 const line = idx === -1 ? undefined : !files.splice(idx, 1);
 
-const options = { pattern, block, line };
+const options = { pattern, block, jsdoc, line };
 debug("finished parsing CLI flags, got", options);
 
 debug("received %d file(s) to strip", files.length);
