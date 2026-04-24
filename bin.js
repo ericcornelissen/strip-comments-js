@@ -18,8 +18,8 @@ const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
 let code = 0;
 
 debug("parsing CLI flags");
-let idx = files.indexOf("--pattern");
-const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
+let idx = files.indexOf("--help");
+const help = idx === -1 ? false : !!files.splice(idx, 1);
 
 idx = files.indexOf("--keep-block");
 const block = idx === -1 ? undefined : !files.splice(idx, 1);
@@ -27,8 +27,28 @@ const block = idx === -1 ? undefined : !files.splice(idx, 1);
 idx = files.indexOf("--keep-line");
 const line = idx === -1 ? undefined : !files.splice(idx, 1);
 
-const options = { pattern, block, line };
+idx = files.indexOf("--pattern");
+const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
+
+const options = { help, block, line, pattern };
 debug("finished parsing CLI flags, got", options);
+
+if (help) {
+	console.log(`strip-comments-js [flags] [files]
+
+Summary:
+  Strip comments from JavaScript and TypeScript code.
+
+Flags:
+  --help         Output this help message.
+  --keep-block   Don't strip block comments.
+  --keep-line    Don't strip line comments.
+  --pattern      A regular expression of comments to strip.
+
+Need more help? Found a bug? Missing something? See:
+https://gitlab.com/ericcornelissen/strip-comments-js`);
+	exit(0);
+}
 
 debug("received %d file(s) to strip", files.length);
 const promises = files.map(async (file) => {
