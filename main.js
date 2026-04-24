@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import assert from "node:assert";
+
 const S_CODE = 0;
 const S_LINE_COMMENT = 1;
 const S_BLOCK_COMMENT = 2;
@@ -160,6 +162,7 @@ class Stack {
 
 	pop() {
 		this.#stack.pop();
+		assert(this.#stack.length > 0);
 	}
 
 	push(state) {
@@ -177,7 +180,9 @@ class Queue {
 	}
 
 	next() {
-		return this.#list[this.#idx++];
+		const idx = this.#idx++;
+		assert(idx < this.#list.length);
+		return this.#list[idx];
 	}
 
 	peek() {
@@ -185,6 +190,8 @@ class Queue {
 	}
 
 	prev() {
-		return this.#list[this.#idx - 2];
+		const idx = this.#idx - 2;
+		assert(idx >= 0);
+		return this.#list[idx];
 	}
 }
