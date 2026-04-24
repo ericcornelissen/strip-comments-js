@@ -46,7 +46,7 @@ export function strip(code, { pattern, line, block }) {
 					if (startLineComment) stack.push(S_LINE_COMMENT);
 					else if (startBlockComment) stack.push(S_BLOCK_COMMENT);
 
-					if (startLineComment || startBlockComment) result.pop();
+					if (startLineComment || startBlockComment) comment.push(result.pop());
 				}
 
 				break;
@@ -54,15 +54,17 @@ export function strip(code, { pattern, line, block }) {
 			case "*": {
 				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
 					const content = comment.slice(1, comment.length - 1).join("");
-					if (block && pattern.test(content)) {
-						trimEnd(result);
-						chars.next();
-					} else {
-						result.push("/", ...comment);
-					}
+					if (content.length > 0) {
+						if (block && pattern.test(content)) {
+							trimEnd(result);
+							chars.next();
+						} else {
+							result.push(...comment);
+						}
 
-					stack.pop();
-					comment.length = 0;
+						stack.pop();
+						comment.length = 0;
+					}
 				}
 
 				break;
@@ -75,7 +77,7 @@ export function strip(code, { pattern, line, block }) {
 						if (chars.prev() === "\r") result.push("\r");
 						result.push("\n");
 					} else {
-						result.push("/", ...comment);
+						result.push(...comment);
 					}
 
 					stack.pop();
