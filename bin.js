@@ -24,13 +24,16 @@ const help = idx === -1 ? false : !!files.splice(idx, 1);
 idx = files.indexOf("--keep-block");
 const block = idx === -1 ? undefined : !files.splice(idx, 1);
 
+idx = files.indexOf("--keep-jsdoc");
+const jsdoc = idx === -1 ? undefined : !files.splice(idx, 1);
+
 idx = files.indexOf("--keep-line");
 const line = idx === -1 ? undefined : !files.splice(idx, 1);
 
 idx = files.indexOf("--pattern");
 const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
 
-const options = { help, block, line, pattern };
+const options = { block, help, jsdoc, line, pattern };
 debug("finished parsing CLI flags, got", options);
 
 if (help) {
@@ -65,7 +68,7 @@ const promises = files.map(async (file) => {
 	debug("stripping comments from '%s' (length: %d)", file, content.length);
 	const stripped = stripComments(content, options);
 
-	if (content !== stripped) {
+	if (content.length !== stripped.length) {
 		debug("writing stripped file '%s' (length: %d)", file, stripped.length);
 		await writeFile(file, stripped, { encoding: "utf-8" });
 	} else {

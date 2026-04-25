@@ -9,6 +9,7 @@ const any = /[^]?/;
  * @property {RegExp} [pattern] The pattern of comments to strip.
  * @property {true} [block=true] Whether to strip block comments.
  * @property {true} [line=true] Whether to strip line comments.
+ * @property {true} [jsdoc=true] Whether to strip JSDoc comments.
  */
 
 /**
@@ -23,6 +24,7 @@ export function stripComments(code, options) {
 	if (options === undefined) options = {};
 	options.pattern ??= any;
 	options.block ??= true;
+	options.jsdoc ??= true;
 	options.line ??= true;
 
 	return strip(code, options);

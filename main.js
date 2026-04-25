@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import assert from "node:assert";
+
 const S_CODE = 0;
 const S_LINE_COMMENT = 1;
 const S_BLOCK_COMMENT = 2;
@@ -7,7 +9,7 @@ const S_STRING_SINGLE = 3;
 const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 
-export function strip(code, { pattern, line, block }) {
+export function strip(code, { pattern, line, jsdoc, block }) {
 	if (!(pattern instanceof RegExp)) throw new Error("expr must be a RegExp");
 
 	const result = [];
@@ -44,7 +46,7 @@ export function strip(code, { pattern, line, block }) {
 					if (startLineComment) stack.push(S_LINE_COMMENT);
 					else if (startBlockComment) stack.push(S_BLOCK_COMMENT);
 
-					if (startLineComment || startBlockComment) result.pop();
+					if (startLineComment || startBlockComment) comment.push(result.pop());
 				}
 
 				break;
@@ -52,15 +54,21 @@ export function strip(code, { pattern, line, block }) {
 			case "*": {
 				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
 					const content = comment.slice(1, comment.length - 1).join("");
-					if (block && pattern.test(content)) {
-						trimEnd(result);
-						chars.next();
-					} else {
-						result.push("/", ...comment);
-					}
+					if (content.length > 0) {
+						if (
+							block &&
+							(jsdoc || !content.startsWith("**")) &&
+							pattern.test(content)
+						) {
+							trimEnd(result);
+							chars.next();
+						} else {
+							result.push(...comment);
+						}
 
-					stack.pop();
-					comment.length = 0;
+						stack.pop();
+						comment.length = 0;
+					}
 				}
 
 				break;
@@ -73,7 +81,7 @@ export function strip(code, { pattern, line, block }) {
 						if (chars.prev() === "\r") result.push("\r");
 						result.push("\n");
 					} else {
-						result.push("/", ...comment);
+						result.push(...comment);
 					}
 
 					stack.pop();
@@ -160,6 +168,7 @@ class Stack {
 
 	pop() {
 		this.#stack.pop();
+		assert(this.#stack.length > 0);
 	}
 
 	push(state) {
@@ -177,7 +186,9 @@ class Queue {
 	}
 
 	next() {
-		return this.#list[this.#idx++];
+		const idx = this.#idx++;
+		assert(idx < this.#list.length);
+		return this.#list[idx];
 	}
 
 	peek() {
@@ -185,6 +196,8 @@ class Queue {
 	}
 
 	prev() {
-		return this.#list[this.#idx - 2];
+		const idx = this.#idx - 2;
+		assert(idx >= 0);
+		return this.#list[idx];
 	}
 }
