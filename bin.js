@@ -45,7 +45,7 @@ const promises = files.map(async (file) => {
 	debug("stripping comments from '%s' (length: %d)", file, content.length);
 	const stripped = stripComments(content, options);
 
-	if (content !== stripped) {
+	if (content.length !== stripped.length) {
 		debug("writing stripped file '%s' (length: %d)", file, stripped.length);
 		await writeFile(file, stripped, { encoding: "utf-8" });
 	} else {
