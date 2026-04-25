@@ -45,6 +45,7 @@ Summary:
 Flags:
   --help         Output this help message.
   --keep-block   Don't strip block comments.
+  --keep-jsdoc   Don't strip JSDoc comments.
   --keep-line    Don't strip line comments.
   --pattern      A regular expression of comments to strip.
 
