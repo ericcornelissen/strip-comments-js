@@ -21,12 +21,12 @@ test("testdata", async () => {
 
 	const testdata = {};
 	for (const file of await fs.readdir("testdata")) {
-		if (!file.endsWith(".js")) continue;
+		if (file.endsWith(".want")) continue;
 		testdata[file] = path.resolve("testdata", file);
 	}
 
 	for (const [file, filepath] of Object.entries(testdata)) {
-		const wantpath = filepath.replace(".js", ".want");
+		const wantpath = filepath.replace(/\.[a-z]+$/, ".want");
 		await test(file, async () => {
 			const inp = await fs.readFile(filepath, { encoding: "utf-8" });
 			const got = strip(inp, options);

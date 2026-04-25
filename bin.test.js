@@ -8,7 +8,7 @@ import { test } from "node:test";
 
 const testdata = {};
 for (const file of await fs.readdir("testdata")) {
-	if (!file.endsWith(".js")) continue;
+	if (file.endsWith(".want")) continue;
 	testdata[file] = path.resolve("testdata", file);
 }
 
@@ -20,7 +20,7 @@ test("regular usage", async () => {
 			spawnSync("./bin.js", [filepath]);
 
 			const got = await fs.readFile(filepath);
-			const want = await fs.readFile(filepath.replace(".js", ".want"));
+			const want = await fs.readFile(filepath.replace(/\.[a-z]+$/, ".want"));
 			fs.writeFile(filepath, before);
 
 			assert.deepEqual(got.toString(), want.toString());

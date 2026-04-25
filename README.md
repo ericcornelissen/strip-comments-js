@@ -2,7 +2,7 @@
 
 # strip-comments-js
 
-Strip comments from JavaScript files.
+Strip comments from JavaScript and TypeScript code.
 
 ## Install
 
@@ -47,6 +47,8 @@ stripComments("var unicorns = false; // Only horses", { line: false });
 - `pattern`: The pattern of comments to strip. By default all comments are
   stripped.
 - `block`: Whether to strip block comments. By default block comments are
+  stripped.
+- `jsdoc`: Whether to strip JSDoc comments. By default JSDoc comments are
   stripped.
 - `line`: Whether to strip line comments. By default line comments are stripped.
 
