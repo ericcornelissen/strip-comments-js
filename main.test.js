@@ -119,6 +119,29 @@ test("pattern", async () => {
 	});
 });
 
+test("pathological input", () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		jsdoc: true,
+		line: true,
+	};
+
+	const testCases = [
+		["//", ""],
+		["// ", ""],
+		["//\n", "\n"],
+		["/**/", ""],
+		["/* */", ""],
+		["/*/**/", ""],
+		["/*/*/", ""],
+	];
+
+	for (const [inp, out] of testCases) {
+		assert.equal(strip(inp, options), out);
+	}
+});
+
 test("preserve block comments", async () => {
 	const options = {
 		pattern: /[^]?/,
