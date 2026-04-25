@@ -15,6 +15,7 @@ test("testdata", async () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
+		jsdoc: true,
 		line: true,
 	};
 
@@ -40,6 +41,7 @@ test("newlines", async () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
+		jsdoc: true,
 		line: true,
 	};
 
@@ -66,6 +68,7 @@ test("newlines", async () => {
 test("pattern", async () => {
 	const defaultOptions = {
 		block: true,
+		jsdoc: true,
 		line: true,
 	};
 
@@ -120,6 +123,7 @@ test("pathological input", () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
+		jsdoc: true,
 		line: true,
 	};
 
@@ -142,6 +146,7 @@ test("preserve block comments", async () => {
 	const options = {
 		pattern: /[^]?/,
 		block: false,
+		jsdoc: true,
 		line: true,
 	};
 
@@ -183,10 +188,75 @@ test("preserve block comments", async () => {
 	});
 });
 
+test("preserve jsdoc comments", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		jsdoc: false,
+		line: true,
+	};
+
+	await test("any jsdoc comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment
+						.block()
+						.map((s) => s.replace(/^(\s*)\/\*/, "$1/**")),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.equal(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("any (non-JSDoc) block comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment.line().filter((s) => !s.startsWith("*")),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.notEqual(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("any line comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment.line(),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.notEqual(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("pathological input", () => {
+		const code = `/** // foobar */`;
+		assert.equal(strip(code, options), code);
+	});
+});
+
 test("preserve line comments", async () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
+		jsdoc: true,
 		line: false,
 	};
 
@@ -232,6 +302,7 @@ test("input-output length", () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
+		jsdoc: true,
 		line: true,
 	};
 
@@ -254,6 +325,7 @@ test("idempotent", () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
+		jsdoc: true,
 		line: true,
 	};
 

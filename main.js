@@ -9,7 +9,7 @@ const S_STRING_SINGLE = 3;
 const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 
-export function strip(code, { pattern, line, block }) {
+export function strip(code, { pattern, line, jsdoc, block }) {
 	if (!(pattern instanceof RegExp)) throw new Error("expr must be a RegExp");
 
 	const result = [];
@@ -55,7 +55,11 @@ export function strip(code, { pattern, line, block }) {
 				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
 					const content = comment.slice(1, comment.length - 1).join("");
 					if (content.length > 0) {
-						if (block && pattern.test(content)) {
+						if (
+							block &&
+							(jsdoc || !content.startsWith("**")) &&
+							pattern.test(content)
+						) {
 							trimEnd(result);
 							chars.next();
 						} else {

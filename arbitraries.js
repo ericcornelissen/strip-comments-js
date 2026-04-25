@@ -19,7 +19,11 @@ export const comment = {
 	block: (content) =>
 		fc
 			.record({
-				content: content || fc.string().filter((s) => !s.includes("*/")),
+				content:
+					content ||
+					fc
+						.string({ unit: fc.oneof(fc.string(), fc.constant("\n")) })
+						.filter((s) => !s.includes("*/")),
 				pre: whitespace(),
 				start: whitespace(),
 				end: whitespace(),
