@@ -5,7 +5,7 @@ stages:
   - publish
 
 variables:
-  NODE: 24.14.1
+  NODE: 24.15.0
 
 check:
   stage: test
