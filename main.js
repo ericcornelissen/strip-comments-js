@@ -9,7 +9,8 @@ const S_STRING_SINGLE = 3;
 const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 
-export function strip(code, { pattern, line, jsdoc, block }) {
+export function strip(code, options) {
+	const { block, jsdoc, line, pattern, protected: protect } = options;
 	if (!(pattern instanceof RegExp)) throw new Error("expr must be a RegExp");
 
 	const result = [];
@@ -58,6 +59,7 @@ export function strip(code, { pattern, line, jsdoc, block }) {
 						if (
 							block &&
 							(jsdoc || !content.startsWith("**")) &&
+							(protect || !content.startsWith("*!")) &&
 							pattern.test(content)
 						) {
 							trimEnd(result);
@@ -76,7 +78,11 @@ export function strip(code, { pattern, line, jsdoc, block }) {
 			case "\n": {
 				if (state === S_LINE_COMMENT) {
 					const content = comment.slice(1, comment.length - 1).join("");
-					if (line && pattern.test(content)) {
+					if (
+						line &&
+						(protect || !content.startsWith("/!")) &&
+						pattern.test(content)
+					) {
 						trimEnd(result);
 						if (chars.prev() === "\r") result.push("\r");
 						result.push("\n");

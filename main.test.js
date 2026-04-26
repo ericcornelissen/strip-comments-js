@@ -17,6 +17,7 @@ test("testdata", async () => {
 		block: true,
 		jsdoc: true,
 		line: true,
+		protected: true,
 	};
 
 	const testdata = {};
@@ -43,6 +44,7 @@ test("newlines", async () => {
 		block: true,
 		jsdoc: true,
 		line: true,
+		protected: true,
 	};
 
 	const testdata = {
@@ -70,6 +72,7 @@ test("pattern", async () => {
 		block: true,
 		jsdoc: true,
 		line: true,
+		protected: true,
 	};
 
 	const testdata = {
@@ -125,6 +128,7 @@ test("pathological input", () => {
 		block: true,
 		jsdoc: true,
 		line: true,
+		protected: true,
 	};
 
 	const testCases = [
@@ -148,6 +152,7 @@ test("preserve block comments", async () => {
 		block: false,
 		jsdoc: true,
 		line: true,
+		protected: true,
 	};
 
 	await test("any block comment", () => {
@@ -188,15 +193,16 @@ test("preserve block comments", async () => {
 	});
 });
 
-test("preserve jsdoc comments", async () => {
+test("preserve JSDoc comments", async () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
 		jsdoc: false,
 		line: true,
+		protected: true,
 	};
 
-	await test("any jsdoc comment", () => {
+	await test("any JSDoc comment", () => {
 		fc.assert(
 			fc.property(
 				fc.record({
@@ -219,7 +225,7 @@ test("preserve jsdoc comments", async () => {
 			fc.property(
 				fc.record({
 					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.line().filter((s) => !s.startsWith("*")),
+					comment: arb.comment.block().filter((s) => !/\s*\/\*\*/.test(s)),
 					post: arb.javascript.program().map((s) => s.trimStart()),
 				}),
 				({ pre, comment, post }) => {
@@ -258,6 +264,7 @@ test("preserve line comments", async () => {
 		block: true,
 		jsdoc: true,
 		line: false,
+		protected: true,
 	};
 
 	await test("any line comment", () => {
@@ -298,12 +305,57 @@ test("preserve line comments", async () => {
 	});
 });
 
+test("preserve protected comments", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		jsdoc: true,
+		line: true,
+		protected: false,
+	};
+
+	await test("any protected comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment
+						.any()
+						.map((s) => s.replace(/^(\s*)(\/[/*])/, "$1$2!")),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.equal(strip(code, options), code);
+				},
+			),
+		);
+	});
+
+	await test("any non-protected comment", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					pre: arb.javascript.program().map((s) => s.trimEnd()),
+					comment: arb.comment.any().filter((s) => !/\s*\/[/*]!/.test(s)),
+					post: arb.javascript.program().map((s) => s.trimStart()),
+				}),
+				({ pre, comment, post }) => {
+					const code = `${pre}${comment}${post}`;
+					assert.notEqual(strip(code, options), code);
+				},
+			),
+		);
+	});
+});
+
 test("input-output length", () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
 		jsdoc: true,
 		line: true,
+		protected: true,
 	};
 
 	fc.assert(
@@ -327,6 +379,7 @@ test("idempotent", () => {
 		block: true,
 		jsdoc: true,
 		line: true,
+		protected: true,
 	};
 
 	fc.assert(
