@@ -11,7 +11,7 @@ const S_STRING_BACK = 5;
 
 export function strip(code, options) {
 	const { block, jsdoc, line, pattern, protected: protect } = options;
-	if (!(pattern instanceof RegExp)) throw new Error("expr must be a RegExp");
+	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");
 
 	const result = [];
 
@@ -116,8 +116,7 @@ export function strip(code, options) {
 			case "$": {
 				if (state === S_STRING_BACK && chars.peek() === "{") {
 					stack.push(S_CODE);
-					chars.next();
-					result.push("{");
+					result.push(chars.next());
 				}
 
 				break;

@@ -46,11 +46,13 @@ stripComments("var unicorns = false; // Only horses", { line: false });
 
 - `pattern`: The pattern of comments to strip. By default all comments are
   stripped.
+- `line`: Whether to strip line comments. By default line comments are stripped.
 - `block`: Whether to strip block comments. By default block comments are
   stripped.
-- `jsdoc`: Whether to strip JSDoc comments. By default JSDoc comments are
-  stripped.
-- `line`: Whether to strip line comments. By default line comments are stripped.
+- `jsdoc`: Whether to strip JSDoc comments (comments like `/** ... */`). By
+  default JSDoc comments are stripped.
+- `protected`: Whether to strip protected comments (comments like `//! ...` or
+  `/*! ... */`). By default protected comments are stripped.
 
 ## Related
 
