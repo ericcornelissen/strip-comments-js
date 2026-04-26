@@ -10,6 +10,7 @@ const any = /[^]?/;
  * @property {true} [block=true] Whether to strip block comments.
  * @property {true} [line=true] Whether to strip line comments.
  * @property {true} [jsdoc=true] Whether to strip JSDoc comments.
+ * @property {true} [protected=true] Whether to strip protected comments.
  */
 
 /**
@@ -26,6 +27,7 @@ export function stripComments(code, options) {
 	options.block ??= true;
 	options.jsdoc ??= true;
 	options.line ??= true;
+	options.protected ??= true;
 
 	return strip(code, options);
 }
