@@ -54,12 +54,12 @@ export function strip(code, options) {
 			}
 			case "*": {
 				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
-					const content = comment.slice(1, comment.length - 1).join("");
-					if (content.length > 0) {
+					if (comment.length > 2) {
+						const content = comment.slice(2, comment.length - 1).join("");
 						if (
 							block &&
-							(jsdoc || !content.startsWith("**")) &&
-							(protect || !content.startsWith("*!")) &&
+							(jsdoc || !content.startsWith("*")) &&
+							(protect || !content.startsWith("!")) &&
 							pattern.test(content)
 						) {
 							trimEnd(result);
@@ -77,10 +77,10 @@ export function strip(code, options) {
 			}
 			case "\n": {
 				if (state === S_LINE_COMMENT) {
-					const content = comment.slice(1, comment.length - 1).join("");
+					const content = comment.slice(2, comment.length - 1).join("");
 					if (
 						line &&
-						(protect || !content.startsWith("/!")) &&
+						(protect || !content.startsWith("!")) &&
 						pattern.test(content)
 					) {
 						trimEnd(result);
