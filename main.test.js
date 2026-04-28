@@ -96,6 +96,26 @@ test("pattern", async () => {
 			inp: "var x = /* foobaz */ y;",
 			want: "var x = /* foobaz */ y;",
 		},
+		"pattern with start of string anchor, line comment": {
+			pattern: /^\s*foo/,
+			inp: "var x = y; // foobar\n",
+			want: "var x = y;\n",
+		},
+		"pattern with start of string anchor, block comment": {
+			pattern: /^\s*foo/,
+			inp: "var x = y; /* foobar */\n",
+			want: "var x = y;\n",
+		},
+		"pattern with end of string anchor, line comment": {
+			pattern: /bar\s*$/,
+			inp: "var x = y; // foobar\n",
+			want: "var x = y;\n",
+		},
+		"pattern with end of string anchor, block comment": {
+			pattern: /bar\s*$/,
+			inp: "var x = y; /* foobar */\n",
+			want: "var x = y;\n",
+		},
 	};
 
 	for (const [name, testCase] of Object.entries(testdata)) {
