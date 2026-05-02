@@ -43,14 +43,18 @@
   ],
   "devDependencies": {
     "fast-check": "4.6.0",
-    "prettier": "3.8.2"
+    "prettier": "3.8.2",
+    "strip-assertions": "1.0.0"
   },
   "scripts": {
     "_prettier": "prettier '**/*.{js,md,yml}'",
-    "check": "npm run _prettier -- --check && npm run test",
+    "check": "npm run check:formatting",
+    "check:formatting": "npm run _prettier -- --check ",
     "format": "npm run _prettier -- --write",
+    "package": "strip-assertions ./*.js",
     "test": "npm run test:unit && npm run test:bin",
     "test:bin": "node --test 'bin.test.js'",
-    "test:unit": "node --test 'main.test.js'"
+    "test:unit": "node --test 'main.test.js'",
+    "verify": "npm run check && npm run test"
   }
 }

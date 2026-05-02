@@ -18,7 +18,7 @@ check:
       - node_modules/
   script:
     - npm clean-install
-    - npm run check
+    - npm run verify
 
 publish:
   stage: publish
@@ -31,4 +31,6 @@ publish:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   script:
+    - npm clean-install
+    - npm run package
     - npm publish || true
