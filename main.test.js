@@ -229,7 +229,8 @@ test("preserve JSDoc comments", async () => {
 					pre: arb.javascript.program().map((s) => s.trimEnd()),
 					comment: arb.comment
 						.block()
-						.map((s) => s.replace(/^(\s*)\/\*/, "$1/**")),
+						.map((s) => s.replace(/^(\s*)\/\*/, "$1/**"))
+						.filter((s) => !/^(\s*)\/\*\*\//.test(s)),
 					post: arb.javascript.program().map((s) => s.trimStart()),
 				}),
 				({ pre, comment, post }) => {
