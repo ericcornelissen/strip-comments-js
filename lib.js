@@ -7,10 +7,10 @@ const any = /[^]?/;
 /**
  * @typedef Options
  * @property {RegExp} [pattern] The pattern of comments to strip.
- * @property {true} [block=true] Whether to strip block comments.
- * @property {true} [line=true] Whether to strip line comments.
- * @property {true} [jsdoc=true] Whether to strip JSDoc comments.
- * @property {true} [protected=true] Whether to strip protected comments.
+ * @property {boolean} [block=true] Whether to strip block comments.
+ * @property {boolean} [line=true] Whether to strip line comments.
+ * @property {boolean} [jsdoc=true] Whether to strip JSDoc comments.
+ * @property {boolean} [protected=true] Whether to strip protected comments.
  */
 
 /**
