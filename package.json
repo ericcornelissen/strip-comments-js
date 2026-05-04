@@ -4,7 +4,12 @@
   "description": "Strip comments from JavaScript and TypeScript code",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "lib.js",
+  "exports": {
+    ".": {
+      "types": "./lib.d.ts",
+      "import": "./lib.js"
+    }
+  },
   "bin": {
     "strip-comments-js": "bin.js"
   },

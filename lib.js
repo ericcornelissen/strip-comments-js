@@ -14,10 +14,11 @@ const any = /[^]?/;
  */
 
 /**
- * Strip the comments from a string.
+ * Strip comments from a piece of code.
  *
  * @param {string} code The code to strip comments from.
- * @param {Options | RegExp} [options] The pattern of comments to strip.
+ * @param {Options | RegExp} [options] The options for stripping.
+ * @return {string} The stripped code.
  */
 export function stripComments(code, options) {
 	if (options instanceof RegExp) options = { pattern: options };
