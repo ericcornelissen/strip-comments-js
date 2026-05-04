@@ -15,7 +15,7 @@ export function strip(code, options) {
 
 	const result = [];
 
-	const chars = new Queue(code + "\n");
+	const chars = new Scanner(code + "\n");
 	const stack = new Stack(S_CODE);
 	const comment = [];
 
@@ -181,7 +181,7 @@ class Stack {
 	}
 }
 
-class Queue {
+class Scanner {
 	#list;
 	#idx;
 
