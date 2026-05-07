@@ -1,6 +1,6 @@
 {
   "name": "strip-comments-js",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Strip comments from JavaScript and TypeScript code",
   "license": "Apache-2.0",
   "type": "module",
@@ -43,6 +43,7 @@
     "SECURITY.md",
     "bin.js",
     "lib.js",
+    "lib.d.ts",
     "main.js",
     "package.json"
   ],
