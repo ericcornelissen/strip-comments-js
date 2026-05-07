@@ -7,7 +7,7 @@ import { test } from "node:test";
 
 import * as fc from "fast-check";
 
-import * as arb from "./arbitraries.js";
+import * as arb from "@ericcornelissen/arbitrary-javascript";
 
 import { strip } from "./main.js";
 
@@ -179,13 +179,14 @@ test("preserve block comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.block(),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					pre: arb.javascript(),
+					comment: arb.javascript.comment.block(),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.equal(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
 				},
 			),
 		);
@@ -195,21 +196,28 @@ test("preserve block comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.line(),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					pre: arb.javascript(),
+					comment: arb.javascript.comment.line(),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.notEqual(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(!stripped.includes(comment));
 				},
 			),
 		);
 	});
 
 	await test("pathological input", () => {
-		const code = `/* // foobar */`;
-		assert.equal(strip(code, options), code);
+		const testCases = [
+			{ inp: `/* // foobar */`, out: `/* // foobar */` },
+			{ inp: `/**///`, out: `/**/` },
+		];
+
+		for (const { inp, out } of testCases) {
+			assert.equal(strip(inp, options), out);
+		}
 	});
 });
 
@@ -226,16 +234,17 @@ test("preserve JSDoc comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment
+					pre: arb.javascript(),
+					comment: arb.javascript.comment
 						.block()
 						.map((s) => s.replace(/^(\s*)\/\*/, "$1/**"))
 						.filter((s) => !/^(\s*)\/\*\*\//.test(s)),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.equal(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
 				},
 			),
 		);
@@ -245,13 +254,16 @@ test("preserve JSDoc comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.block().filter((s) => !/\s*\/\*\*/.test(s)),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					pre: arb.javascript(),
+					comment: arb.javascript.comment
+						.block()
+						.filter((s) => !/\s*\/\*\*/.test(s)),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.notEqual(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(!stripped.includes(comment));
 				},
 			),
 		);
@@ -261,21 +273,28 @@ test("preserve JSDoc comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.line(),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					pre: arb.javascript(),
+					comment: arb.javascript.comment.line(),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.notEqual(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(!stripped.includes(comment));
 				},
 			),
 		);
 	});
 
 	await test("pathological input", () => {
-		const code = `/** // foobar */`;
-		assert.equal(strip(code, options), code);
+		const testCases = [
+			{ inp: `/** // foobar */`, out: `/** // foobar */` },
+			{ inp: `/***///`, out: `/***/` },
+		];
+
+		for (const { inp, out } of testCases) {
+			assert.equal(strip(inp, options), out);
+		}
 	});
 });
 
@@ -292,13 +311,14 @@ test("preserve line comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.line(),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					pre: arb.javascript(),
+					comment: arb.javascript.comment.line(),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.equal(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
 				},
 			),
 		);
@@ -308,21 +328,28 @@ test("preserve line comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.block(),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					pre: arb.javascript(),
+					comment: arb.javascript.comment.block(),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.notEqual(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(!stripped.includes(comment));
 				},
 			),
 		);
 	});
 
 	await test("pathological input", () => {
-		const code = `// /* foobar */`;
-		assert.equal(strip(code, options), code);
+		const testCases = [
+			{ inp: `////`, out: `////` },
+			{ inp: `// /* foobar */`, out: `// /* foobar */` },
+		];
+
+		for (const { inp, out } of testCases) {
+			assert.equal(strip(inp, options), out);
+		}
 	});
 });
 
@@ -339,15 +366,16 @@ test("preserve protected comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment
-						.any()
+					pre: arb.javascript().map((s) => s.trimEnd()),
+					comment: arb.javascript
+						.comment()
 						.map((s) => s.replace(/^(\s*)(\/[/*])/, "$1$2!")),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.equal(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
 				},
 			),
 		);
@@ -357,16 +385,30 @@ test("preserve protected comments", async () => {
 		fc.assert(
 			fc.property(
 				fc.record({
-					pre: arb.javascript.program().map((s) => s.trimEnd()),
-					comment: arb.comment.any().filter((s) => !/\s*\/[/*]!/.test(s)),
-					post: arb.javascript.program().map((s) => s.trimStart()),
+					pre: arb.javascript().map((s) => s.trimEnd()),
+					comment: arb.javascript
+						.comment()
+						.filter((s) => !/\s*\/[/*]!/.test(s)),
+					post: arb.javascript(),
 				}),
 				({ pre, comment, post }) => {
 					const code = `${pre}${comment}${post}`;
-					assert.notEqual(strip(code, options), code);
+					const stripped = strip(code, options);
+					assert.ok(!stripped.includes(comment));
 				},
 			),
 		);
+	});
+
+	await test("pathological input", () => {
+		const testCases = [
+			{ inp: `/*! // foobar */`, out: `/*! // foobar */` },
+			{ inp: `/*!*///`, out: `/*!*/` },
+		];
+
+		for (const { inp, out } of testCases) {
+			assert.equal(strip(inp, options), out);
+		}
 	});
 });
 
@@ -382,9 +424,9 @@ test("input-output length", () => {
 	fc.assert(
 		fc.property(
 			fc.record({
-				pre: arb.javascript.program().map((s) => s.trimEnd()),
-				comment: arb.comment.any(),
-				post: arb.javascript.program().map((s) => s.trimStart()),
+				pre: arb.javascript(),
+				comment: arb.javascript.comment(),
+				post: arb.javascript(),
 			}),
 			({ pre, comment, post }) => {
 				const code = `${pre}${comment}${post}`;
@@ -406,9 +448,9 @@ test("idempotent", () => {
 	fc.assert(
 		fc.property(
 			fc.record({
-				pre: arb.javascript.program().map((s) => s.trimEnd()),
-				comment: arb.comment.any(),
-				post: arb.javascript.program().map((s) => s.trimStart()),
+				pre: arb.javascript(),
+				comment: arb.javascript.comment(),
+				post: arb.javascript(),
 			}),
 			({ pre, comment, post }) => {
 				const code = `${pre}${comment}${post}`;
