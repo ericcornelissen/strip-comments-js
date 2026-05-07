@@ -4,22 +4,35 @@ stages:
   - test
   - publish
 
-variables:
-  NODE: 24.15.0
-
-check:
-  stage: test
-  image: node:${NODE}
-  cache:
+default:
+  cache: &npm_cache
     key:
       files:
         - package-lock.json
     paths:
       - node_modules/
+
+variables:
+  NODE: 26.0.0
+
+verify:
+  stage: test
+  image: node:${NODE}
+  cache:
+    <<: *npm_cache
   script:
     - npm clean-install
     - npm run verify
-
+node24:
+  stage: test
+  image: node:24.0.0
+  needs:
+    - verify
+  cache:
+    <<: *npm_cache
+  script:
+    - npm clean-install
+    - npm run test
 publish:
   stage: publish
   image: node:${NODE}
