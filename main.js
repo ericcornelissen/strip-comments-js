@@ -65,7 +65,6 @@ export function strip(code, options) {
 							pattern.test(content)
 						) {
 							trimEnd(result);
-
 							if (result.length === 0) {
 								if (chars.peek() === "\r") chars.next();
 								if (chars.peek() === "\n") chars.next();
@@ -91,7 +90,6 @@ export function strip(code, options) {
 						pattern.test(content)
 					) {
 						trimEnd(result);
-
 						if (result.length === 0) {
 							if (!chars.peek()) result.push(void 0);
 						} else {
