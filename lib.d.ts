@@ -2,20 +2,20 @@
 
 export type Options = {
   /** The pattern of comments to strip. */
-  pattern?: RegExp,
+  pattern?: RegExp;
 
   /** Whether to strip block comments. */
-  block?: boolean,
+  block?: boolean;
 
   /** Whether to strip line comments. */
-  line?: boolean,
+  line?: boolean;
 
   /** Whether to strip JSDoc comments. */
-  jsdoc?: boolean,
+  jsdoc?: boolean;
 
   /** Whether to strip protected comments. */
-  protected?: boolean,
-}
+  protected?: boolean;
+};
 
 /**
  * Strip comments from a piece of code.
@@ -24,4 +24,4 @@ export type Options = {
  * @param options The options for stripping.
  * @return The stripped code.
  */
-export function stripComments(code: string, options?: Options)
+export function stripComments(code: string, options?: Options): string;
