@@ -56,8 +56,10 @@ stripComments("var unicorns = false; // Only horses", { line: false });
 
 ## Related
 
+- [strip-assertions]
 - [strip-directives]
 
+[strip-assertions]: https://www.npmjs.com/package/strip-assertions
 [strip-directives]: https://www.npmjs.com/package/strip-directives
 
 ## License

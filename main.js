@@ -164,8 +164,8 @@ function trimEnd(result) {
 class Stack {
 	#stack;
 
-	constructor(init) {
-		this.#stack = [init];
+	constructor(base) {
+		this.#stack = [base];
 	}
 
 	peek() {

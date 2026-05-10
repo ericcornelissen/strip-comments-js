@@ -40,7 +40,7 @@ const options = { block, help, jsdoc, line, pattern, protected: protect };
 debug("finished parsing CLI flags, got", options);
 
 if (help) {
-	console.log(`strip-comments-js [flags] [files]
+	console.log(`strip-comments-js [flags...] [files...]
 
 Summary:
   Strip comments from JavaScript and TypeScript code.

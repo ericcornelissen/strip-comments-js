@@ -55,8 +55,8 @@
   },
   "scripts": {
     "_prettier": "prettier '**/*.{js,md,ts,yml}'",
-    "check": "npm run check:formatting",
-    "check:formatting": "npm run _prettier -- --check ",
+    "check": "npm run check:format",
+    "check:format": "npm run _prettier -- --check",
     "format": "npm run _prettier -- --write",
     "package": "strip-assertions ./*.js",
     "test": "npm run test:unit && npm run test:bin",
