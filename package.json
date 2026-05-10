@@ -48,6 +48,7 @@
     "package.json"
   ],
   "devDependencies": {
+    "@ericcornelissen/arbitrary-javascript": "0.2.3",
     "fast-check": "4.6.0",
     "prettier": "3.8.2",
     "strip-assertions": "1.0.2"

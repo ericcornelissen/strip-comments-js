@@ -55,7 +55,9 @@ export function strip(code, options) {
 			case "*": {
 				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
 					if (comment.length > 2) {
-						const content = comment.slice(2, comment.length - 1).join("");
+						comment.push(chars.next());
+
+						const content = comment.slice(2, comment.length - 2).join("");
 						if (
 							block &&
 							(jsdoc || !content.startsWith("*")) &&
@@ -63,7 +65,6 @@ export function strip(code, options) {
 							pattern.test(content)
 						) {
 							trimEnd(result);
-							chars.next();
 						} else {
 							result.push(...comment);
 						}
