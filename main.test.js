@@ -7,7 +7,7 @@ import { test } from "node:test";
 
 import * as fc from "fast-check";
 
-import * as arb from "@ericcornelissen/arbitrary-javascript";
+import * as arb from "./arbitraries.js";
 
 import { strip } from "./main.js";
 
@@ -178,35 +178,19 @@ test("preserve block comments", async () => {
 
 	await test("any block comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript(),
-					comment: arb.javascript.comment.block(),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(stripped.includes(comment.trim()));
-				},
-			),
+			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
 		);
 	});
 
 	await test("any line comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript(),
-					comment: arb.javascript.comment.line(),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(!stripped.includes(comment));
-				},
-			),
+			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
 		);
 	});
 
@@ -233,57 +217,28 @@ test("preserve JSDoc comments", async () => {
 
 	await test("any JSDoc comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript(),
-					comment: arb.javascript.comment
-						.block()
-						.map((s) => s.replace(/^(\s*)\/\*/, "$1/**"))
-						.filter((s) => !/^(\s*)\/\*\*\//.test(s)),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(stripped.includes(comment.trim()));
-				},
-			),
+			fc.property(arb.codeWithComment("jsdoc"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
 		);
 	});
 
 	await test("any (non-JSDoc) block comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript(),
-					comment: arb.javascript.comment
-						.block()
-						.filter((s) => !/\s*\/\*\*/.test(s)),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(!stripped.includes(comment));
-				},
-			),
+			fc.property(arb.codeWithComment("non-jsdoc"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
 		);
 	});
 
 	await test("any line comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript(),
-					comment: arb.javascript.comment.line(),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(!stripped.includes(comment));
-				},
-			),
+			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
 		);
 	});
 
@@ -310,35 +265,19 @@ test("preserve line comments", async () => {
 
 	await test("any line comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript(),
-					comment: arb.javascript.comment.line(),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(stripped.includes(comment.trim()));
-				},
-			),
+			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
 		);
 	});
 
 	await test("any block comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript(),
-					comment: arb.javascript.comment.block(),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(!stripped.includes(comment));
-				},
-			),
+			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
 		);
 	});
 
@@ -365,39 +304,19 @@ test("preserve protected comments", async () => {
 
 	await test("any protected comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript().map((s) => s.trimEnd()),
-					comment: arb.javascript
-						.comment()
-						.map((s) => s.replace(/^(\s*)(\/[/*])/, "$1$2!")),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(stripped.includes(comment.trim()));
-				},
-			),
+			fc.property(arb.codeWithComment("protected"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
 		);
 	});
 
 	await test("any non-protected comment", () => {
 		fc.assert(
-			fc.property(
-				fc.record({
-					pre: arb.javascript().map((s) => s.trimEnd()),
-					comment: arb.javascript
-						.comment()
-						.filter((s) => !/\s*\/[/*]!/.test(s)),
-					post: arb.javascript(),
-				}),
-				({ pre, comment, post }) => {
-					const code = `${pre}${comment}${post}`;
-					const stripped = strip(code, options);
-					assert.ok(!stripped.includes(comment));
-				},
-			),
+			fc.property(arb.codeWithComment("unprotected"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
 		);
 	});
 
@@ -423,42 +342,18 @@ test("input-output length", () => {
 	};
 
 	fc.assert(
-		fc.property(
-			fc.record({
-				pre: arb.javascript(),
-				comment: arb.javascript.comment(),
-				post: arb.javascript(),
-			}),
-			({ pre, comment, post }) => {
-				const code = `${pre}${comment}${post}`;
-				assert.ok(strip(code, options).length < code.length);
-			},
-		),
+		fc.property(arb.codeWithComment(), ({ code }) => {
+			assert.ok(strip(code, options).length < code.length);
+		}),
 	);
 });
 
 test("idempotent", () => {
-	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-	};
-
 	fc.assert(
-		fc.property(
-			fc.record({
-				pre: arb.javascript(),
-				comment: arb.javascript.comment(),
-				post: arb.javascript(),
-			}),
-			({ pre, comment, post }) => {
-				const code = `${pre}${comment}${post}`;
-				const got = strip(code, options);
-				const want = strip(got, options);
-				assert.equal(got, want);
-			},
-		),
+		fc.property(arb.codeWithComment(), ({ code, options }) => {
+			const got = strip(code, options);
+			const want = strip(got, options);
+			assert.equal(got, want);
+		}),
 	);
 });
