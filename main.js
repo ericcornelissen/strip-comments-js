@@ -10,6 +10,8 @@ const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 
 const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
+const whitespaceExpr =
+	/[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/;
 
 export function strip(code, options) {
 	const { block, jsdoc, line, pattern, protected: protect, spdx } = options;
@@ -67,11 +69,6 @@ export function strip(code, options) {
 							pattern.test(content)
 						) {
 							trimEnd(result);
-							if (result.length === 0) {
-								if (chars.peek() === "\r") chars.next();
-								if (chars.peek() === "\n") chars.next();
-								if (!chars.peek()) result.push(void 0);
-							}
 						} else {
 							result.push(...comment);
 						}
@@ -93,12 +90,8 @@ export function strip(code, options) {
 						pattern.test(content)
 					) {
 						trimEnd(result);
-						if (result.length === 0) {
-							if (!chars.peek()) result.push(void 0);
-						} else {
-							if (chars.prev() === "\r") result.push("\r");
-							result.push("\n");
-						}
+						if (chars.prev() === "\r") result.push("\r");
+						result.push("\n");
 					} else {
 						result.push(...comment);
 					}
@@ -160,14 +153,9 @@ function inString(state) {
 function trimEnd(result) {
 	for (let i = result.length - 1; i > 0; i--) {
 		const cur = result[i];
-		if (/\s/.test(cur)) {
+		if (whitespaceExpr.test(cur)) {
 			result.pop();
 		} else {
-			break;
-		}
-
-		if (cur === "\n") {
-			if (result[i - 1] === "\r") result.pop();
 			break;
 		}
 	}
