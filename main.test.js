@@ -18,6 +18,7 @@ test("testdata", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		spdx: true,
 	};
 
 	const testdata = {};
@@ -45,6 +46,7 @@ test("newlines", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		spdx: true,
 	};
 
 	const testdata = {
@@ -73,6 +75,7 @@ test("pattern", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		spdx: true,
 	};
 
 	const testdata = {
@@ -149,6 +152,7 @@ test("pathological input", () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		spdx: true,
 	};
 
 	const testCases = [
@@ -174,6 +178,7 @@ test("preserve block comments", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		spdx: true,
 	};
 
 	await test("any block comment", () => {
@@ -213,6 +218,7 @@ test("preserve JSDoc comments", async () => {
 		jsdoc: false,
 		line: true,
 		protected: true,
+		spdx: true,
 	};
 
 	await test("any JSDoc comment", () => {
@@ -261,6 +267,7 @@ test("preserve line comments", async () => {
 		jsdoc: true,
 		line: false,
 		protected: true,
+		spdx: true,
 	};
 
 	await test("any line comment", () => {
@@ -300,6 +307,7 @@ test("preserve protected comments", async () => {
 		jsdoc: true,
 		line: true,
 		protected: false,
+		spdx: true,
 	};
 
 	await test("any protected comment", () => {
@@ -332,6 +340,35 @@ test("preserve protected comments", async () => {
 	});
 });
 
+test("preserve SPDX ID comments", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		jsdoc: true,
+		line: true,
+		protected: true,
+		spdx: false,
+	};
+
+	await test("any SPDX short-form identifier", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("spdx"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
+		);
+	});
+
+	await test("any non-SPDX short-form identifier comment", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("non-spdx"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
+		);
+	});
+});
+
 test("input-output length", () => {
 	const options = {
 		pattern: /[^]?/,
@@ -339,6 +376,7 @@ test("input-output length", () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		spdx: true,
 	};
 
 	fc.assert(

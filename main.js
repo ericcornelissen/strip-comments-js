@@ -9,8 +9,10 @@ const S_STRING_SINGLE = 3;
 const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 
+const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
+
 export function strip(code, options) {
-	const { block, jsdoc, line, pattern, protected: protect } = options;
+	const { block, jsdoc, line, pattern, protected: protect, spdx } = options;
 	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");
 
 	const result = [];
@@ -87,6 +89,7 @@ export function strip(code, options) {
 					if (
 						line &&
 						(protect || !content.startsWith("!")) &&
+						(spdx || !spdxExpr.test(content)) &&
 						pattern.test(content)
 					) {
 						trimEnd(result);
