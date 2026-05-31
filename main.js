@@ -99,7 +99,9 @@ export function strip(code, options) {
 			}
 			case "\n": {
 				if (state === S_LINE_COMMENT) {
-					const content = comment.slice(2, comment.length - 1);
+					let content = comment.slice(2, comment.length - 1);
+					if (content.endsWith("\r")) content = content.slice(0, -1);
+
 					if (
 						line &&
 						(protect || !content.startsWith("!")) &&
