@@ -120,6 +120,11 @@ test("pattern", async () => {
 			inp: "var x = y; /* foobar */\n",
 			want: "var x = y;\n",
 		},
+		"pattern with end of string anchor, line comment ending in CRLF": {
+			pattern: /bar$/,
+			inp: "var x = y; // foobar\r\n",
+			want: "var x = y;\r\n",
+		},
 	};
 
 	for (const [name, testCase] of Object.entries(testdata)) {
