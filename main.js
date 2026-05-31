@@ -90,6 +90,10 @@ export function strip(code, options) {
 						pattern.test(content)
 					) {
 						trimEnd(result);
+
+						if (result[result.length - 1] === "\n") result.pop();
+						if (result[result.length - 1] === "\r") result.pop();
+
 						if (chars.prev() === "\r") result.push("\r");
 						result.push("\n");
 					} else {

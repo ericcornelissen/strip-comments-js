@@ -2,16 +2,12 @@ const msg = `Hello ${
 	(function () {
 		const r = Math.random();
 		if (r < 0.25) {
-
 			return "world";
 		} else if (r < 0.50) {
-
 			return "värld";
 		} else if (r < 0.75) {
-
 			return "wereld";
 		} else if (r < 0.99) {
-
 			return "mundo";
 		} else {
 
