@@ -72,6 +72,11 @@ export function strip(code, options) {
 							if (chars.peek() === "\n") {
 								if (result.last() === "\n") result.shrink();
 								if (result.last() === "\r") result.shrink();
+
+								if (result.isEmpty()) {
+									chars.next();
+									if (chars.isEmpty()) result.push("\n");
+								}
 							}
 						} else {
 							result.push(...comment.chars());
@@ -98,8 +103,10 @@ export function strip(code, options) {
 						if (result.last() === "\n") result.shrink();
 						if (result.last() === "\r") result.shrink();
 
-						if (chars.prev() === "\r") result.push("\r");
-						result.push("\n");
+						if (!result.isEmpty() || chars.isEmpty()) {
+							if (chars.prev() === "\r") result.push("\r");
+							result.push("\n");
+						}
 					} else {
 						result.push(...comment.chars());
 					}
@@ -199,6 +206,10 @@ class Scanner {
 		this.#idx = 0;
 	}
 
+	isEmpty() {
+		return this.#list.length === this.#idx;
+	}
+
 	next() {
 		const idx = this.#idx++;
 		assert(idx < this.#list.length);
@@ -234,6 +245,10 @@ class StringBuilder {
 	get(idx) {
 		assert(idx >= 0 && idx < this.#list.length);
 		return this.#list[idx];
+	}
+
+	isEmpty() {
+		return this.#list.length === 0;
 	}
 
 	last() {
