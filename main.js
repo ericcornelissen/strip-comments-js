@@ -68,6 +68,11 @@ export function strip(code, options) {
 							pattern.test(content)
 						) {
 							trimEnd(result);
+
+							if (chars.peek() === "\n") {
+								if (result.last() === "\n") result.shrink();
+								if (result.last() === "\r") result.shrink();
+							}
 						} else {
 							result.push(...comment.chars());
 						}

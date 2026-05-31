@@ -54,11 +54,11 @@ test("newlines", async () => {
 		"LF after line comment": ["var x;// foo\nvar y;", "var x;\nvar y;"],
 		"LF before line comment": ["var x;\n// foo", "var x;"],
 		"LF after block comment": ["var x;/*foo*/\nvar y;", "var x;\nvar y;"],
-		"LF before block comment": ["var x;\n/*foo*/", "var x;\n"],
+		"LF before block comment": ["var x;\n/*foo*/", "var x;"],
 		"CRLF after line comment": ["var x;// foo\r\nvar y;", "var x;\r\nvar y;"],
 		"CRLF before line comment": ["var x;\r\n// foo", "var x;"],
 		"CRLF after block comment": ["var x;/*foo*/\r\nvar y;", "var x;\r\nvar y;"],
-		"CRLF before block comment": ["var x;\r\n/*foo*/", "var x;\r\n"],
+		"CRLF before block comment": ["var x;\r\n/*foo*/", "var x;"],
 		"line comment without final newline": ["var x; // foo", "var x;"],
 		"block comment without final newline": ["var x; /* foo */", "var x;"],
 	};

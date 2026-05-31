@@ -10,7 +10,6 @@ const msg = `Hello ${
 		} else if (r < 0.99) {
 			return "mundo";
 		} else {
-
 			return "easter egg";
 		}
 	})()
