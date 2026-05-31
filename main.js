@@ -15,6 +15,23 @@ const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
 const whitespaceExpr =
 	/[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/;
 
+/**
+ * @typedef Options
+ * @property {RegExp} pattern The pattern of comments to strip.
+ * @property {boolean} block Whether to strip block comments.
+ * @property {boolean} line Whether to strip line comments.
+ * @property {boolean} jsdoc Whether to strip JSDoc comments.
+ * @property {boolean} protected Whether to strip protected comments.
+ * @property {boolean} spdx Whether to strip SPDX short-form identifiers.
+ */
+
+/**
+ * Strip comments from a piece of code.
+ *
+ * @param {string} code The code to strip comments from.
+ * @param {Options} options The options for stripping.
+ * @returns {string} The stripped code.
+ */
 export function strip(code, options) {
 	const { block, jsdoc, line, pattern, protected: protect, spdx } = options;
 	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");
@@ -175,14 +192,32 @@ export function strip(code, options) {
 	return result.toString();
 }
 
+/**
+ * Check if we are currently in a code comment.
+ *
+ * @param {number} state The current state.
+ * @returns {boolean} If `state` is one of the comment states.
+ */
 function inComment(state) {
 	return state === S_LINE_COMMENT || state === S_BLOCK_COMMENT;
 }
 
+/**
+ * Check if we are currently in a regular expression literal.
+ *
+ * @param {number} state The current state.
+ * @returns {boolean} If `state` is one of the regexp states.
+ */
 function inRegExp(state) {
 	return state === S_REGEXP || state === S_REGEXP_CHAR_RANGE;
 }
 
+/**
+ * Check if we are currently in a string literal.
+ *
+ * @param {number} state The current state.
+ * @returns {boolean} If `state` is one of the string states.
+ */
 function inString(state) {
 	return (
 		state === S_STRING_SINGLE ||
@@ -191,61 +226,124 @@ function inString(state) {
 	);
 }
 
-function trimEnd(result) {
-	for (let i = result.length - 1; i > 0; i--) {
-		const cur = result.get(i);
+/**
+ * Strip (non-newline) whitespace at the end of a string builder.
+ *
+ * @param {StringBuilder} string The string the strip.
+ */
+function trimEnd(string) {
+	for (let i = string.length - 1; i > 0; i--) {
+		const cur = string.get(i);
 		if (whitespaceExpr.test(cur)) {
-			result.shrink();
+			string.shrink();
 		} else {
 			break;
 		}
 	}
 }
 
+/**
+ * A LIFO stack that may not be empty.
+ *
+ * @template T
+ */
 class Stack {
 	#stack;
 
+	/**
+	 * Initialize a new stack with one (mandatory) element, which can never be
+	 * removed.
+	 *
+	 * @param {T} base The initial element on the stack.
+	 */
 	constructor(base) {
 		this.#stack = [base];
 	}
 
+	/**
+	 * Inspect the top of the stack without consuming it.
+	 *
+	 * @returns {T} The top element
+	 */
 	peek() {
 		return this.#stack[this.#stack.length - 1];
 	}
 
+	/**
+	 * Remote the top of the stack.
+	 *
+	 * @throws {Error} Te stack has only one element when called.
+	 */
 	pop() {
 		this.#stack.length -= 1;
 		assert(this.#stack.length > 0);
 	}
 
-	push(state) {
-		this.#stack.push(state);
+	/**
+	 * Add a new element to the top of the stack.
+	 *
+	 * @param {T} element The element to put on top of the stack.
+	 */
+	push(element) {
+		this.#stack.push(element);
 	}
 }
 
+/**
+ * A one-way scanner over a list.
+ *
+ * @template T
+ */
 class Scanner {
 	#list;
 	#idx;
 
+	/**
+	 * Initialize a new scanner for a list.
+	 *
+	 * @param {T[]} list The list to create a scanner for.
+	 */
 	constructor(list) {
 		this.#list = list;
 		this.#idx = 0;
 	}
 
+	/**
+	 * Check if the scanner is finished.
+	 *
+	 * @returns {boolean} `true` if the scanner finished, `false` otherwise.
+	 */
 	isEmpty() {
 		return this.#list.length === this.#idx;
 	}
 
+	/**
+	 * Consume the current element in the list.
+	 *
+	 * @returns {T} The current element.
+	 * @throws {Error} The scanner is finished when called.
+	 */
 	next() {
 		const idx = this.#idx++;
 		assert(idx < this.#list.length);
 		return this.#list[idx];
 	}
 
+	/**
+	 * Preview the current element in the list without consuming it.
+	 *
+	 * @returns {T} The current element.
+	 */
 	peek() {
 		return this.#list[this.#idx];
 	}
 
+	/**
+	 * Inspect the previous element in the list.
+	 *
+	 * @returns {T} The previous element.
+	 * @throws {Error} The scanner hasn't started yet when called.
+	 */
 	prev() {
 		const idx = this.#idx - 2;
 		assert(idx >= 0);
@@ -253,34 +351,73 @@ class Scanner {
 	}
 }
 
+/**
+ * A resizable string builder.
+ */
 class StringBuilder {
 	#list;
 
+	/**
+	 * Initialize a new string builder.
+	 */
 	constructor() {
 		this.#list = [];
 	}
 
+	/**
+	 * The current length of the string being build.
+	 */
 	get length() {
 		return this.#list.length;
 	}
 
+	/**
+	 * Get the current string as a list of characters.
+	 *
+	 * @returns {string[]} The characters.
+	 */
 	chars() {
 		return this.#list;
 	}
 
+	/**
+	 * Get a character in the current string.
+	 *
+	 * @param {number} idx The index of the character to get.
+	 * @returns {string} The character at `idx`.
+	 * @throws {Error} if `idx` is out of range.
+	 */
 	get(idx) {
 		assert(idx >= 0 && idx < this.#list.length);
 		return this.#list[idx];
 	}
 
+	/**
+	 * Check if the string builder is empty.
+	 *
+	 * @returns {boolean} `true` if the string builder is empty, `false` otherwise.
+	 */
 	isEmpty() {
 		return this.#list.length === 0;
 	}
 
+	/**
+	 * Get the last character in the current string.
+	 *
+	 * @returns {string} The last character.
+	 */
 	last() {
 		return this.#list[this.#list.length - 1];
 	}
 
+	/**
+	 * Add one or more characters to the string.
+	 *
+	 * @param {...string} chars The character(s) to add.
+	 * @throws {Error} No characters have been provided.
+	 * @throws {Error} At least one of `chars` is not a string.
+	 * @throws {Error} At least one of `chars` is not a character.
+	 */
 	push(...chars) {
 		assert(chars.length > 0);
 		assert(chars.every((char) => typeof char === "string"));
@@ -288,26 +425,54 @@ class StringBuilder {
 		this.#list.push(...chars);
 	}
 
+	/**
+	 * Remove the last character from the current string.
+	 *
+	 * @returns {string} The last character in the string.
+	 * @throws {Error} The current string is empty.
+	 */
 	pop() {
-		assert(this.#list.length >= 0);
+		assert(this.#list.length > 0);
 		return this.#list.pop();
 	}
 
+	/**
+	 * Reset the string builder to an empty string.
+	 */
 	reset() {
 		this.#list.length = 0;
 	}
 
+	/**
+	 * Shrink the current string by 1.
+	 *
+	 * @throws {Error} The current string is empty.
+	 */
 	shrink() {
+		assert(this.#list.length > 0);
 		this.#list.length -= 1;
-		assert(this.#list.length >= 0);
 	}
 
+	/**
+	 * Extract a slice of the current string.
+	 *
+	 * If `end` is negative, it is relative to the end of the string.
+	 *
+	 * @param {number} start The start index of the slice.
+	 * @param {number} end The end index of the slice.
+	 * @returns {string} The substring from `start` to `end`.
+	 * @throws {Error} Either `start` or `end` is out of bounds.
+	 */
 	slice(start, end) {
-		assert(start >= 0);
-		assert(end < this.#list.length);
+		assert(start >= 0 && end < this.#list.length);
 		return this.#list.slice(start, end).join("");
 	}
 
+	/**
+	 * Extract the current string from the builder.
+	 *
+	 * @returns {string} The current string.
+	 */
 	toString() {
 		return this.#list.join("");
 	}
