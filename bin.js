@@ -49,13 +49,13 @@ Summary:
   Strip comments from JavaScript and TypeScript code.
 
 Flags:
-  --help             Output this help message.
-  --keep-block       Don't strip block comments.
-  --keep-jsdoc       Don't strip JSDoc comments.
-  --keep-line        Don't strip line comments.
-  --keep-protected   Don't strip protected comments.
-  --pattern          A regular expression of comments to strip.
-  --strip-spdx       Do strip SPDX short-form identifiers.
+  --help                Output this help message.
+  --keep-block          Don't strip block comments.
+  --keep-jsdoc          Don't strip JSDoc comments.
+  --keep-line           Don't strip line comments.
+  --keep-protected      Don't strip protected comments.
+  --pattern <pattern>   A regular expression of comments to strip.
+  --strip-spdx          Do strip SPDX short-form identifiers.
 
 Need more help? Found a bug? Missing something? See:
 https://gitlab.com/ericcornelissen/strip-comments-js`);
