@@ -63,9 +63,9 @@ test("newlines", async () => {
 		"block comment without final newline": ["var x; /* foo */", "var x;"],
 	};
 
-	for (const [name, [inp, want]] of Object.entries(testdata)) {
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
 		await test(name, () => {
-			assert.equal(strip(inp, options), want);
+			assert.equal(strip(inp, options), out);
 		});
 	}
 });
@@ -146,7 +146,7 @@ test("pattern", async () => {
 	});
 });
 
-test("pathological input", () => {
+test("pathological input", async () => {
 	const options = {
 		pattern: /[^]?/,
 		block: true,
@@ -156,19 +156,27 @@ test("pathological input", () => {
 		spdx: true,
 	};
 
-	const testCases = [
-		["//", ""],
-		["// ", ""],
-		["//\n", ""],
-		["x;//\n", "x;\n"],
-		["/**/", ""],
-		["/* */", ""],
-		["/*/**/", ""],
-		["/*/*/", ""],
-	];
+	const testdata = {
+		"only an empty line comment": ["//", ""],
+		"only a non-empty line comment": ["// ", ""],
+		"only a line comment with a newline": ["//\n", ""],
+		"only trailing line comment": ["x;//\n", "x;\n"],
+		"only an empty block comment": ["/**/", ""],
+		"only a non-empty block comment": ["/* */", ""],
+		"odd block comment 1": ["/*/**/", ""],
+		"odd block comment 2": ["/*/*/", ""],
+		"regexp with line comment 1": ["/\\/*/ // a", "/\\/*/"],
+		"regexp with line comment 2": ["/\\/\\// // a", "/\\/\\//"],
+		"regexp with block comment 1": ["/\\/*/ /* b */", "/\\/*/"],
+		"regexp with block comment 2": ["/\\/\\// /* b */", "/\\/\\//"],
+		"division with line comment": ["3/14 // a", "3/14"],
+		"division with block comment": ["6 / 7 /* b */", "6 / 7"],
+	};
 
-	for (const [inp, out] of testCases) {
-		assert.equal(strip(inp, options), out);
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
 	}
 });
 

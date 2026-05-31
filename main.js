@@ -38,6 +38,10 @@ export function strip(code, options) {
 				if (state === S_CODE) stack.pop();
 				break;
 			}
+			case "\\": {
+				if (!inComment(state)) result.push(chars.next());
+				break;
+			}
 
 			// Comments
 			case "/": {
@@ -142,10 +146,6 @@ export function strip(code, options) {
 
 				break;
 			}
-			case "\\": {
-				if (inString(state)) result.push(chars.next());
-				break;
-			}
 		}
 	}
 
@@ -155,14 +155,6 @@ export function strip(code, options) {
 
 function inComment(state) {
 	return state === S_LINE_COMMENT || state === S_BLOCK_COMMENT;
-}
-
-function inString(state) {
-	return (
-		state === S_STRING_SINGLE ||
-		state === S_STRING_DOUBLE ||
-		state === S_STRING_BACK
-	);
 }
 
 function trimEnd(result) {
