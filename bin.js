@@ -33,10 +33,13 @@ const line = idx === -1 ? undefined : !files.splice(idx, 1);
 idx = files.indexOf("--keep-protected");
 const protect = idx === -1 ? undefined : !files.splice(idx, 1);
 
+idx = files.indexOf("--strip-spdx");
+const spdx = idx === -1 ? undefined : !!files.splice(idx, 1);
+
 idx = files.indexOf("--pattern");
 const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
 
-const options = { block, help, jsdoc, line, pattern, protected: protect };
+const options = { block, help, jsdoc, line, pattern, protected: protect, spdx };
 debug("finished parsing CLI flags, got", options);
 
 if (help) {
@@ -52,6 +55,7 @@ Flags:
   --keep-line        Don't strip line comments.
   --keep-protected   Don't strip protected comments.
   --pattern          A regular expression of comments to strip.
+  --strip-spdx       Do strip SPDX short-form identifiers.
 
 Need more help? Found a bug? Missing something? See:
 https://gitlab.com/ericcornelissen/strip-comments-js`);

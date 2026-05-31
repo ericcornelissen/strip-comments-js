@@ -53,6 +53,9 @@ stripComments("var unicorns = false; // Only horses", { line: false });
   default JSDoc comments are stripped.
 - `protected`: Whether to strip protected comments (comments like `//! ...` or
   `/*! ... */`). By default protected comments are stripped.
+- `spdx`: Whether to strip SPDX short-form identifiers (comments like
+  `// SPDX-License-Identifier: ...`). By default SPDX short-form identifiers are
+  NOT stripped.
 
 ## Related
 
