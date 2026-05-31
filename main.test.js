@@ -133,15 +133,27 @@ test("pattern", async () => {
 		});
 	}
 
-	await test("not a regexp", () => {
-		const cases = [true, 42, 3.14, 9001n, "string", [], {}];
-		for (const v of cases) {
-			const options = {
-				...defaultOptions,
-				pattern: v,
-			};
+	await test("not a regexp", async () => {
+		const testdata = {
+			boolean: true,
+			integer: 42,
+			float: 3.14,
+			bigint: 9001n,
+			string: "string",
+			array: [],
+			object: {},
+			symbol: Symbol(),
+		};
 
-			assert.throws(() => strip("this is not fine", options));
+		for (const [name, pattern] of Object.entries(testdata)) {
+			await test(name, () => {
+				const options = {
+					...defaultOptions,
+					pattern,
+				};
+
+				assert.throws(() => strip("this is not fine", options));
+			});
 		}
 	});
 });
@@ -214,14 +226,16 @@ test("preserve block comments", async () => {
 		);
 	});
 
-	await test("pathological input", () => {
-		const testCases = [
-			{ inp: `/* // foobar */`, out: `/* // foobar */` },
-			{ inp: `/**///`, out: `/**/` },
-		];
+	await test("pathological input", async () => {
+		const testdata = {
+			"line comment in block comment": [`/* // a */`, `/* // a */`],
+			"line comment after block comment": [`/**///`, `/**/`],
+		};
 
-		for (const { inp, out } of testCases) {
-			assert.equal(strip(inp, options), out);
+		for (const [name, [inp, out]] of Object.entries(testdata)) {
+			await test(name, () => {
+				assert.equal(strip(inp, options), out);
+			});
 		}
 	});
 });
@@ -263,14 +277,16 @@ test("preserve JSDoc comments", async () => {
 		);
 	});
 
-	await test("pathological input", () => {
-		const testCases = [
-			{ inp: `/** // foobar */`, out: `/** // foobar */` },
-			{ inp: `/***///`, out: `/***/` },
-		];
+	await test("pathological input", async () => {
+		const testdata = {
+			"line comment in JSDoc comment": [`/** // a */`, `/** // a */`],
+			"line comment after JSDoc comment": [`/***///`, `/***/`],
+		};
 
-		for (const { inp, out } of testCases) {
-			assert.equal(strip(inp, options), out);
+		for (const [name, [inp, out]] of Object.entries(testdata)) {
+			await test(name, () => {
+				assert.equal(strip(inp, options), out);
+			});
 		}
 	});
 });
@@ -303,14 +319,16 @@ test("preserve line comments", async () => {
 		);
 	});
 
-	await test("pathological input", () => {
-		const testCases = [
-			{ inp: `////`, out: `////` },
-			{ inp: `// /* foobar */`, out: `// /* foobar */` },
-		];
+	await test("pathological input", async () => {
+		const testdata = {
+			"line comment in line comment": [`//// a`, `//// a`],
+			"block comment in line comment": [`// /* b */`, `// /* b */`],
+		};
 
-		for (const { inp, out } of testCases) {
-			assert.equal(strip(inp, options), out);
+		for (const [name, [inp, out]] of Object.entries(testdata)) {
+			await test(name, () => {
+				assert.equal(strip(inp, options), out);
+			});
 		}
 	});
 });
@@ -343,14 +361,16 @@ test("preserve protected comments", async () => {
 		);
 	});
 
-	await test("pathological input", () => {
-		const testCases = [
-			{ inp: `/*! // foobar */`, out: `/*! // foobar */` },
-			{ inp: `/*!*///`, out: `/*!*/` },
-		];
+	await test("pathological input", async () => {
+		const testdata = {
+			"line comment in protected comment": [`/*! // a */`, `/*! // a */`],
+			"line comment after protected comment": [`/*!*///`, `/*!*/`],
+		};
 
-		for (const { inp, out } of testCases) {
-			assert.equal(strip(inp, options), out);
+		for (const [name, [inp, out]] of Object.entries(testdata)) {
+			await test(name, () => {
+				assert.equal(strip(inp, options), out);
+			});
 		}
 	});
 });
