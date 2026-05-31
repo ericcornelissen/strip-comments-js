@@ -321,7 +321,7 @@ test("preserve protected comments", async () => {
 
 	await test("any non-protected comment", () => {
 		fc.assert(
-			fc.property(arb.codeWithComment("unprotected"), ({ code, comment }) => {
+			fc.property(arb.codeWithComment("non-protected"), ({ code, comment }) => {
 				const stripped = strip(code, options);
 				assert.ok(!stripped.includes(comment));
 			}),

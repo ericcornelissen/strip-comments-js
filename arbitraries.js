@@ -31,9 +31,9 @@ function commentArbitrary(type) {
 		case "line":
 			return javascript.comment.line();
 		case "non-jsdoc":
-			return javascript.comment.block().filter((s) => !/\s*\/\*\*/.test(s));
+			return javascript.comment.block().filter((s) => !/^\s*\/\*\*/.test(s));
 		case "non-protected":
-			return javascript.comment().filter((s) => !/\s*\/[/*]!/.test(s));
+			return javascript.comment().filter((s) => !/^\s*\/[/*]!/.test(s));
 		case "non-spdx":
 			return javascript
 				.comment()
