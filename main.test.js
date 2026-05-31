@@ -5,6 +5,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { test } from "node:test";
 
+import * as acorn from "acorn";
 import * as fc from "fast-check";
 
 import * as arb from "./arbitraries.js";
@@ -392,6 +393,24 @@ test("idempotent", () => {
 			const got = strip(code, options);
 			const want = strip(got, options);
 			assert.equal(got, want);
+		}),
+	);
+});
+
+test("syntax", () => {
+	fc.assert(
+		fc.property(arb.codeWithComment(), ({ code, options }) => {
+			try {
+				acorn.parse(code, { ecmaVersion: "latest" });
+			} catch {
+				fc.pre(false);
+			}
+
+			try {
+				acorn.parse(strip(code, options), { ecmaVersion: "latest" });
+			} catch (error) {
+				assert.fail(error.message);
+			}
 		}),
 	);
 });
