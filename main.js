@@ -8,6 +8,8 @@ const S_BLOCK_COMMENT = 2;
 const S_STRING_SINGLE = 3;
 const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
+const S_REGEXP = 6;
+const S_REGEXP_CHAR_RANGE = 7;
 
 const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
 const whitespaceExpr =
@@ -49,8 +51,14 @@ export function strip(code, options) {
 
 					if (startLineComment) stack.push(S_LINE_COMMENT);
 					else if (startBlockComment) stack.push(S_BLOCK_COMMENT);
+					else {
+						const code = result.slice(0, -1);
+						if (/(^|[(;=\n!>])\s*$/.test(code)) stack.push(S_REGEXP);
+					}
 
 					if (startLineComment || startBlockComment) comment.push(result.pop());
+				} else if (state === S_REGEXP) {
+					stack.pop();
 				}
 
 				break;
@@ -142,8 +150,20 @@ export function strip(code, options) {
 
 				break;
 			}
+
+			// Regular Expressions
+			case "[": {
+				if (state === S_REGEXP) stack.push(S_REGEXP_CHAR_RANGE);
+				break;
+			}
+			case "]": {
+				if (state === S_REGEXP_CHAR_RANGE) stack.pop();
+				break;
+			}
+
+			// Escaping
 			case "\\": {
-				if (inString(state)) result.push(chars.next());
+				if (inString(state) || inRegExp(state)) result.push(chars.next());
 				break;
 			}
 		}
@@ -155,6 +175,10 @@ export function strip(code, options) {
 
 function inComment(state) {
 	return state === S_LINE_COMMENT || state === S_BLOCK_COMMENT;
+}
+
+function inRegExp(state) {
+	return state === S_REGEXP || state === S_REGEXP_CHAR_RANGE;
 }
 
 function inString(state) {
