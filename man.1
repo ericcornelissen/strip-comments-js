@@ -1,0 +1,74 @@
+.TH "strip-comments-js" "1" "May 2026" "v1.0.11" "User Commands"
+.SH NAME
+strip-comments-js \- strip comments from JavaScript and TypeScript code
+.SH SYNOPSIS
+.B strip-comments-js
+[FLAG]...
+[FILE]...
+.SH DESCRIPTION
+.P
+Strip all or only certain kinds of comments from any number of JavaScript and
+TypeScript source code files.
+.P
+Need more help? Found a bug? Missing something? See:
+.br
+<https://gitlab.com/ericcornelissen/strip-comments-js>
+.SH OPTIONS
+.TP
+.B --help
+Show the help message.
+.TP
+.B --keep-block
+Don't strip block comments.
+.TP
+.B --keep-jsdoc
+Don't strip JSDoc comments.
+.TP
+.B --keep-line
+Don't strip line comments.
+.TP
+.B --keep-protected
+Don't strip protected comments.
+.TP
+.B --pattern \fI<pattern>\fR
+A regular expression of comments to strip.
+.TP
+.B --strip-spdx
+Do strip SPDX short-form identifiers.
+.SH ENVIRONMENT
+.TP
+.B NODE_DEBUG=strip-comments-js
+Enable debug logging.
+.SH EXIT STATUS
+.TP
+.B 0
+All files stripped.
+.TP
+.B 1
+At least one file could not be stripped.
+.SH EXAMPLES
+.TP
+Strip all comments from one or more files:
+.EX
+strip-comments-js file1.js file2.js
+.EE
+.TP
+Preserve block but strip other comments:
+.EX
+strip-comments-js --keep-block file.js
+.EE
+.TP
+Strip only TODO comments:
+.EX
+strip-comments-js --pattern 'TODO:' file.js
+.EE
+.SH AUTHOR
+.P
+Written by Eric Cornelissen.
+.SH COPYRIGHT
+.P
+Copyright \(co 2026 Eric Cornelissen
+.P
+Apache License, Version 2.0
+.br
+<https://www.apache.org/licenses/LICENSE-2.0.html>
