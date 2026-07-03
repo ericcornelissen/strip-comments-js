@@ -10,6 +10,8 @@ const S_STRING_DOUBLE = 4;
 const S_STRING_BACK = 5;
 const S_REGEXP = 6;
 const S_REGEXP_CHAR_RANGE = 7;
+const S_CONTROL_FLOW_START = 8;
+const S_CONTROL_FLOW_BODY = 9;
 
 const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
 const whitespaceExpr =
@@ -48,19 +50,36 @@ export function strip(code, options) {
 		if (!inComment(state)) result.push(char);
 		else comment.push(char);
 
+		if (whitespaceExpr.test(char)) continue;
+		if (state === S_CONTROL_FLOW_BODY) stack.pop();
+
 		switch (char) {
 			case "{": {
-				if (state === S_CODE) stack.push(S_CODE);
+				if (inCode(state)) stack.push(S_CODE);
 				break;
 			}
 			case "}": {
-				if (state === S_CODE) stack.pop();
+				if (inCode(state)) stack.pop();
+				break;
+			}
+			case "(": {
+				if (inCode(state)) stack.push(S_CODE);
+				break;
+			}
+			case ")": {
+				if (inCode(state)) stack.pop();
+
+				if (stack.peek() === S_CONTROL_FLOW_START) {
+					stack.pop();
+					stack.push(S_CONTROL_FLOW_BODY);
+				}
+
 				break;
 			}
 
 			// Comments
 			case "/": {
-				if (state === S_CODE) {
+				if (inCode(state)) {
 					const next = chars.peek();
 
 					const startLineComment = next === "/";
@@ -68,10 +87,7 @@ export function strip(code, options) {
 
 					if (startLineComment) stack.push(S_LINE_COMMENT);
 					else if (startBlockComment) stack.push(S_BLOCK_COMMENT);
-					else {
-						const code = result.slice(0, -1);
-						if (/(^|[(;=\n!>])\s*$/.test(code)) stack.push(S_REGEXP);
-					}
+					else if (startExpression(state, result)) stack.push(S_REGEXP);
 
 					if (startLineComment || startBlockComment) comment.push(result.pop());
 				} else if (state === S_REGEXP) {
@@ -145,19 +161,37 @@ export function strip(code, options) {
 				break;
 			}
 
+			// Control flow
+			case "e":
+			case "f":
+			case "o":
+			case "r": {
+				if (inCode(state)) {
+					const code = result.slice(0, -1) + char;
+					if (/(^|[\s;})])(while|if|do|for)$/.test(code)) {
+						const peek = chars.peek();
+						if (peek === "(" || whitespaceExpr.test(peek)) {
+							stack.push(S_CONTROL_FLOW_START);
+						}
+					}
+				}
+
+				break;
+			}
+
 			// Strings
 			case "'": {
-				if (state === S_CODE) stack.push(S_STRING_SINGLE);
+				if (inCode(state)) stack.push(S_STRING_SINGLE);
 				else if (state === S_STRING_SINGLE) stack.pop();
 				break;
 			}
 			case '"': {
-				if (state === S_CODE) stack.push(S_STRING_DOUBLE);
+				if (inCode(state)) stack.push(S_STRING_DOUBLE);
 				else if (state === S_STRING_DOUBLE) stack.pop();
 				break;
 			}
 			case "`": {
-				if (state === S_CODE) stack.push(S_STRING_BACK);
+				if (inCode(state)) stack.push(S_STRING_BACK);
 				else if (state === S_STRING_BACK) stack.pop();
 				break;
 			}
@@ -193,6 +227,20 @@ export function strip(code, options) {
 }
 
 /**
+ * Check if we are currently in code.
+ *
+ * @param {number} state The current state.
+ * @returns {boolean} If `state` is one of the code states.
+ */
+function inCode(state) {
+	return (
+		state === S_CODE ||
+		state === S_CONTROL_FLOW_START ||
+		state === S_CONTROL_FLOW_BODY
+	);
+}
+
+/**
  * Check if we are currently in a code comment.
  *
  * @param {number} state The current state.
@@ -223,6 +271,24 @@ function inString(state) {
 		state === S_STRING_SINGLE ||
 		state === S_STRING_DOUBLE ||
 		state === S_STRING_BACK
+	);
+}
+
+/**
+ *
+ * @param {number} state The current state.
+ * @param {StringBuilder} snippet The program up to this point.
+ * @returns {boolean} If `state` is one of the string states.
+ */
+function startExpression(state, snippet) {
+	const s = snippet.slice(0, -1);
+	return (
+		/(^|[([{};\n:,=+!>\-])\s*$/.test(s) ||
+		/(^|[\s){};])(in|of|return)\s*$/.test(s) ||
+		/}\s*else\s*$/.test(s) ||
+		/(^|[()[{};:,=+!>\-\s])(delete|void)(\s+(delete|void))*\s*$/.test(s) ||
+		/\*\/\s*$/.test(s) ||
+		state === S_CONTROL_FLOW_BODY
 	);
 }
 

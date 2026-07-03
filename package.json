@@ -50,7 +50,7 @@
     "package.json"
   ],
   "devDependencies": {
-    "@ericcornelissen/arbitrary-javascript": "0.2.3",
+    "@ericcornelissen/arbitrary-javascript": "0.2.7",
     "acorn": "8.16.0",
     "fast-check": "4.6.0",
     "prettier": "3.8.2",
