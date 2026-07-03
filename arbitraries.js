@@ -12,11 +12,14 @@ export function codeWithComment(type) {
 			post: javascript(),
 			options: options(),
 		})
-		.map(({ pre, comment, post, options }) => ({
-			comment,
-			code: `${pre}${comment}${post}`,
-			options,
-		}));
+		.map(({ pre, comment, post, options }) => {
+			if (/^\s*\/\*/.test(comment) && !/;\s$/.test(pre)) {
+				pre += ";";
+			}
+
+			const code = `${pre}${comment}${post}`;
+			return { code, comment, options };
+		});
 }
 
 function commentArbitrary(type) {
