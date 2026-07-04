@@ -10,7 +10,7 @@ import * as fc from "fast-check";
 import * as arb from "./arbitraries.js";
 import * as testdata from "./testdata.js";
 
-import { strip2 as strip } from "./main.js";
+import { strip } from "./main.js";
 
 test("testdata", async () => {
 	const options = {
