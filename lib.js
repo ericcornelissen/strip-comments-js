@@ -20,6 +20,7 @@ const any = /[^]?/;
  * @param {string} code The code to strip comments from.
  * @param {Options | RegExp} [options] The options for stripping.
  * @return {string} The stripped code.
+ * @throws If pattern is not a RegExp.
  */
 export function stripComments(code, options) {
 	if (options instanceof RegExp) options = { pattern: options };

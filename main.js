@@ -33,6 +33,7 @@ const whitespaceExpr =
  * @param {string} code The code to strip comments from.
  * @param {Options} options The options for stripping.
  * @returns {string} The stripped code.
+ * @throws If `options.pattern` is not a RegExp.
  */
 export function strip(code, options) {
 	const { block, jsdoc, line, pattern, protected: protect, spdx } = options;
