@@ -16,6 +16,9 @@ export type Options = {
 	/** Whether to strip protected comments. */
 	protected?: boolean;
 
+	/** Whether to strip sourcemap comments. */
+	sourcemap?: boolean;
+
 	/** Whether to strip SPDX short-form identifiers. */
 	spdx?: boolean;
 };

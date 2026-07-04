@@ -2,7 +2,6 @@
 
 import * as assert from "node:assert";
 import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import { test } from "node:test";
 
 import * as acorn from "acorn";
@@ -20,6 +19,7 @@ test("testdata", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -42,6 +42,7 @@ test("newlines", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -71,6 +72,7 @@ test("pattern", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -170,6 +172,7 @@ test("pathological input", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -227,6 +230,7 @@ test("preserve block comments", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -269,6 +273,7 @@ test("preserve JSDoc comments", async () => {
 		jsdoc: false,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -320,6 +325,7 @@ test("preserve line comments", async () => {
 		jsdoc: true,
 		line: false,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -362,6 +368,7 @@ test("preserve protected comments", async () => {
 		jsdoc: true,
 		line: true,
 		protected: false,
+		sourcemap: true,
 		spdx: true,
 	};
 
@@ -397,6 +404,36 @@ test("preserve protected comments", async () => {
 	});
 });
 
+test("preserve sourcemap comments", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		jsdoc: true,
+		line: true,
+		protected: true,
+		sourcemap: false,
+		spdx: true,
+	};
+
+	await test("any sourcemap comment", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("sourcemap"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
+		);
+	});
+
+	await test("any non-sourcemap comment", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("non-sourcemap"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
+		);
+	});
+});
+
 test("preserve SPDX ID comments", async () => {
 	const options = {
 		pattern: /[^]?/,
@@ -404,6 +441,7 @@ test("preserve SPDX ID comments", async () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: false,
 	};
 
@@ -433,6 +471,7 @@ test("input-output length", () => {
 		jsdoc: true,
 		line: true,
 		protected: true,
+		sourcemap: true,
 		spdx: true,
 	};
 

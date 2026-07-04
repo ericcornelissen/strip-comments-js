@@ -24,6 +24,7 @@ const whitespaceExpr =
  * @property {boolean} line Whether to strip line comments.
  * @property {boolean} jsdoc Whether to strip JSDoc comments.
  * @property {boolean} protected Whether to strip protected comments.
+ * @property {boolean} sourcemap Whether to strip sourcemap comments.
  * @property {boolean} spdx Whether to strip SPDX short-form identifiers.
  */
 
