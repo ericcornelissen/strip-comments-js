@@ -34,6 +34,268 @@ const whitespaceExpr =
  * @param {Options} options The options for stripping.
  * @returns {string} The stripped code.
  */
+export function strip2(code, options) {
+	const { pattern } = options;
+	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");
+
+	const result = new StringBuilder();
+	const chars = new Scanner(code + "\n");
+
+	$code(chars, result, options);
+
+	result.shrink();
+	return result.toString();
+}
+
+/**
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
+ */
+function $blockComment(chars, result, options) {
+	const { jsdoc, block, pattern, protected: protect } = options;
+
+	const comment = new StringBuilder();
+	comment.push(result.pop());
+	comment.push(chars.next());
+
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		comment.push(char);
+
+		if (char === "*" && chars.peek() === "/") {
+			comment.push(chars.next());
+			break;
+		}
+	}
+
+	const content = comment
+		.slice(2, comment.length - 2)
+		.replaceAll(/[ \t]*\n[ \t]*\*/g, "");
+
+	if (
+		block &&
+		(jsdoc || !content.startsWith("*")) &&
+		(protect || !content.startsWith("!")) &&
+		pattern.test(content)
+	) {
+		trimEnd(result);
+
+		if (chars.peek() === "\n") {
+			if (result.last() === "\n") result.shrink();
+			if (result.last() === "\r") result.shrink();
+
+			if (result.isEmpty()) {
+				chars.next();
+				if (chars.isEmpty()) result.push("\n");
+			}
+		}
+	} else {
+		result.push(...comment.chars());
+	}
+}
+
+/**
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
+ */
+function $code(chars, result, options) {
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "{": {
+				$code(chars, result, options);
+				break;
+			}
+			case "}": {
+				return;
+			}
+
+			case "(": {
+				const code = result.slice(0, -1);
+
+				$code(chars, result, options);
+
+				if (/(^|[\s;})])(while|if|do|for)\s*$/.test(code)) {
+					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
+					if (chars.peek() === "/") {
+						result.push(chars.next());
+
+						const next = chars.peek();
+						if (next === "/") $lineComment(chars, result, options);
+						else if (next === "*") $blockComment(chars, result, options);
+						else $regexp(chars, result);
+					}
+				}
+
+				break;
+			}
+			case ")": {
+				return;
+			}
+
+			// Comments
+			case "/": {
+				const next = chars.peek();
+				if (next === "/") $lineComment(chars, result, options);
+				else if (next === "*") $blockComment(chars, result, options);
+				else if (startExpression(-1, result)) $regexp(chars, result);
+
+				break;
+			}
+
+			// Strings
+			case "'":
+			case '"': {
+				$string(chars, result, char);
+				break;
+			}
+			case "`": {
+				$template(chars, result, options);
+				break;
+			}
+		}
+	}
+}
+
+/**
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
+ */
+function $lineComment(chars, result, options) {
+	const { line, pattern, protected: protect, spdx } = options;
+
+	const comment = new StringBuilder();
+	comment.push(result.pop());
+
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		comment.push(char);
+
+		if (char === "\n") break;
+	}
+
+	let content = comment.slice(2, comment.length - 1);
+	if (content.endsWith("\r")) content = content.slice(0, -1);
+
+	if (
+		line &&
+		(protect || !content.startsWith("!")) &&
+		(spdx || !spdxExpr.test(content)) &&
+		pattern.test(content)
+	) {
+		trimEnd(result);
+
+		if (result.last() === "\n") result.shrink();
+		if (result.last() === "\r") result.shrink();
+
+		if (!result.isEmpty() || chars.isEmpty()) {
+			if (chars.prev() === "\r") result.push("\r");
+			result.push("\n");
+		}
+	} else {
+		result.push(...comment.chars());
+	}
+}
+
+/**
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ */
+function $regexp(chars, result) {
+	let inCharRange = false;
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "\\": {
+				result.push(chars.next());
+				break;
+			}
+			case "[": {
+				inCharRange = true;
+				break;
+			}
+			case "]": {
+				inCharRange = false;
+				break;
+			}
+			case "/": {
+				if (!inCharRange) return;
+			}
+		}
+	}
+
+	assert(false);
+}
+
+/**
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {"'" | '"'} quote
+ */
+function $string(chars, result, quote) {
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "\\": {
+				result.push(chars.next());
+				break;
+			}
+			case quote: {
+				return;
+			}
+		}
+	}
+
+	assert(false);
+}
+
+/**
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
+ */
+function $template(chars, result, options) {
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "\\": {
+				result.push(chars.next());
+				break;
+			}
+			case "$": {
+				if (chars.peek() === "{") {
+					result.push(chars.next());
+					$code(chars, result, options);
+				}
+				break;
+			}
+			case "`": {
+				return;
+			}
+		}
+	}
+
+	assert(false);
+}
+
+/**
+ * Strip comments from a piece of code.
+ *
+ * @param {string} code The code to strip comments from.
+ * @param {Options} options The options for stripping.
+ * @returns {string} The stripped code.
+ */
 export function strip(code, options) {
 	const { block, jsdoc, line, pattern, protected: protect, spdx } = options;
 	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");

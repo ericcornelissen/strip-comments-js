@@ -2,7 +2,6 @@
 
 import * as assert from "node:assert";
 import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import { test } from "node:test";
 
 import * as acorn from "acorn";
@@ -11,7 +10,7 @@ import * as fc from "fast-check";
 import * as arb from "./arbitraries.js";
 import * as testdata from "./testdata.js";
 
-import { strip } from "./main.js";
+import { strip2 as strip } from "./main.js";
 
 test("testdata", async () => {
 	const options = {
@@ -207,6 +206,9 @@ test("pathological input", async () => {
 		"regexp in an in-operator": ["'x' in /'/g // test", "'x' in /'/g"],
 		"regexp in-op delete": ["'x' in delete /'/g // test", "'x' in delete /'/g"],
 		"regexp as else body": ["if(a){} else/}/; // test", "if(a){} else/}/;"],
+		"regexp as if body": ["if (a) /}/; // test", "if (a) /}/;"],
+		"regexp as for body": ["for(x in y) /}/; // test", "for(x in y) /}/;"],
+		"regexp as while body": ["while(a)/}/; // test", "while(a)/}/;"],
 		"division with line comment, 1": ["3/14 // a", "3/14"],
 		"division with line comment, 2": ["(3+1)/(4) // a", "(3+1)/(4)"],
 		"division with block comment, 1": ["6 / 7 /* b */", "6 / 7"],
@@ -462,10 +464,11 @@ test("syntax", () => {
 				fc.pre(false);
 			}
 
+			const stripped = strip(code, options);
 			try {
-				acorn.parse(strip(code, options), { ecmaVersion: "latest" });
+				acorn.parse(stripped, { ecmaVersion: "latest" });
 			} catch (error) {
-				assert.fail(error.message);
+				assert.fail(`${error} in:\n\n\`${code}\`\n\n***\n\n\`${stripped}\``);
 			}
 		}),
 	);
