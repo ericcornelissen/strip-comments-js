@@ -3,17 +3,12 @@
 import * as assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import { test } from "node:test";
 
-const testdata = {};
-for (const file of await fs.readdir("testdata")) {
-	if (file.endsWith(".want")) continue;
-	testdata[file] = path.resolve("testdata", file);
-}
+import * as testdata from "./testdata.js";
 
 test("regular usage", async () => {
-	for (const [file, filepath] of Object.entries(testdata)) {
+	for (const [file, filepath] of await testdata.files()) {
 		await test(file, async () => {
 			const before = await fs.readFile(filepath);
 
@@ -29,7 +24,7 @@ test("regular usage", async () => {
 });
 
 test("--pattern", async () => {
-	for (const [file, filepath] of Object.entries(testdata)) {
+	for (const [file, filepath] of await testdata.files()) {
 		await test(file, async () => {
 			const before = await fs.readFile(filepath);
 

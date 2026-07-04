@@ -9,6 +9,7 @@ import * as acorn from "acorn";
 import * as fc from "fast-check";
 
 import * as arb from "./arbitraries.js";
+import * as testdata from "./testdata.js";
 
 import { strip } from "./main.js";
 
@@ -22,13 +23,7 @@ test("testdata", async () => {
 		spdx: true,
 	};
 
-	const testdata = {};
-	for (const file of await fs.readdir("testdata")) {
-		if (file.endsWith(".want")) continue;
-		testdata[file] = path.resolve("testdata", file);
-	}
-
-	for (const [file, filepath] of Object.entries(testdata)) {
+	for (const [file, filepath] of await testdata.files()) {
 		const wantpath = filepath.replace(/\.[a-z]+$/, ".want");
 		await test(file, async () => {
 			const inp = await fs.readFile(filepath, { encoding: "utf-8" });
