@@ -125,6 +125,11 @@ test("pattern", async () => {
 			inp: "var x = y; // foobar\r\n",
 			want: "var x = y;\r\n",
 		},
+		"multiline block comment with leading '*'": {
+			pattern: /hello world/,
+			inp: "/**\n * hello\n * world\n */",
+			want: "",
+		},
 	};
 
 	for (const [name, testCase] of Object.entries(testdata)) {

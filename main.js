@@ -101,7 +101,9 @@ export function strip(code, options) {
 					if (comment.length > 2) {
 						comment.push(chars.next());
 
-						const content = comment.slice(2, comment.length - 2);
+						const content = comment
+							.slice(2, comment.length - 2)
+							.replaceAll(/[ \t]*\n[ \t]*\*/g, "");
 						if (
 							block &&
 							(jsdoc || !content.startsWith("*")) &&
