@@ -12,17 +12,10 @@ fixed in a new version.
 
 ### Version information
 
-Run `npm ls strip-comments-js` and put the result below:
+Run `strip-comments-js --version` and put the result below:
 
 ```text
-$ npm ls strip-comments-js
-
-```
-
-Run `node --version` and put the result below:
-
-```text
-$ node --version
+$ strip-comments-js --version
 
 ```
 

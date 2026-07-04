@@ -68,6 +68,7 @@ Flags:
   --keep-protected      Don't strip protected comments.
   --pattern <pattern>   A regular expression of comments to strip.
   --strip-spdx          Do strip SPDX short-form identifiers.
+  --version             Output version information.
 
 Need more help? Found a bug? Missing something? See:
 https://gitlab.com/ericcornelissen/strip-comments-js`);

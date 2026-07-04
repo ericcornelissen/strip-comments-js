@@ -7,7 +7,7 @@ Strip comments from JavaScript and TypeScript code.
 ## Install
 
 ```shell
-npm install strip-comments-js
+npm install --global strip-comments-js
 ```
 
 ## Usage
@@ -20,6 +20,12 @@ strip-comments-js file-1.js file-2.js
 
 ```shell
 strip-comments-js --pattern eslint-disable file-1.js file-2.js
+```
+
+For more information
+
+```shell
+strip-comments-js --help
 ```
 
 ### API
