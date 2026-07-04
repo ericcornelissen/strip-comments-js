@@ -55,7 +55,7 @@ const options = {
 debug("finished parsing CLI flags, got", options);
 
 if (help) {
-	console.log(`strip-comments-js [flags...] [files...]
+	console.log(`strip-comments-js [flag...] [file...]
 
 Summary:
   Strip comments from JavaScript and TypeScript code.
@@ -77,8 +77,9 @@ https://gitlab.com/ericcornelissen/strip-comments-js`);
 
 if (version) {
 	const manifest = await import("./package.json", { with: { type: "json" } });
-	console.log(`strip-comments-js  v${manifest.default.version}`);
-	console.log(`Node.js            v${versions.node}`);
+	console.log(`strip-comments-js : v${manifest.default.version}`);
+	console.log(`Node.js           : v${versions.node}`);
+	exit(0);
 }
 
 debug("received %d file(s) to strip", files.length);

@@ -51,3 +51,5 @@ lines[0] = `.TH "strip-comments-js" "1" "${month} 2026" "v${manifest.version}" "
 await writeFile(manDotOne, lines.join("\n"));
 
 execSync("git commit --all --message 'version bump'");
+execSync(`git tag v${manifest.version}`);
+execSync(`git push origin main v${manifest.version}`);
