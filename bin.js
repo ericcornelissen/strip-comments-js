@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFile, writeFile } from "node:fs/promises";
-import { argv, exit, stderr } from "node:process";
+import { argv, exit, stderr, versions } from "node:process";
 import { debuglog } from "node:util";
 
 delete Object.prototype.__proto__;
@@ -39,7 +39,19 @@ const spdx = idx === -1 ? undefined : !!files.splice(idx, 1);
 idx = files.indexOf("--pattern");
 const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
 
-const options = { block, help, jsdoc, line, pattern, protected: protect, spdx };
+idx = files.indexOf("--version");
+const version = idx === -1 ? undefined : !!files.splice(idx, 1);
+
+const options = {
+	block,
+	help,
+	jsdoc,
+	line,
+	pattern,
+	protected: protect,
+	spdx,
+	version,
+};
 debug("finished parsing CLI flags, got", options);
 
 if (help) {
@@ -56,10 +68,17 @@ Flags:
   --keep-protected      Don't strip protected comments.
   --pattern <pattern>   A regular expression of comments to strip.
   --strip-spdx          Do strip SPDX short-form identifiers.
+  --version             Output version information.
 
 Need more help? Found a bug? Missing something? See:
 https://gitlab.com/ericcornelissen/strip-comments-js`);
 	exit(0);
+}
+
+if (version) {
+	const manifest = await import("./package.json", { with: { type: "json" } });
+	console.log(`strip-comments-js  v${manifest.default.version}`);
+	console.log(`Node.js            v${versions.node}`);
 }
 
 debug("received %d file(s) to strip", files.length);
