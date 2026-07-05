@@ -301,16 +301,20 @@ function $template(chars, result, options) {
 
 /**
  * @param {StringBuilder} snippet The program up to this point.
- * @returns {boolean} If `state` is one of the string states.
+ * @returns {boolean} If this point in the program is the start of an expression.
  */
 function startExpression(snippet) {
+	const expressionExpr =
+		/(^|\n|[~!%^&*(\-=+{[}|:;<,>?/])[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
+	const keywordExpressionExpr =
+		/(^|\s|[~!%^&*(\-=+{[}|:;<,>?/]|\))((await|delete|instanceof|typeof|void)\s*)+$/;
+	const keywordStatementExpr = /(^|\s|[){};])(do|else|in|of|return)\s*$/;
+
 	const s = snippet.slice(0, -1);
 	return (
-		/(^|[([{};\n:,=+!>\-])\s*$/.test(s) ||
-		/(^|[\s){};])(in|of|return)\s*$/.test(s) ||
-		/}\s*else\s*$/.test(s) ||
-		/(^|[()[{};:,=+!>\-\s])(delete|void)(\s+(delete|void))*\s*$/.test(s) ||
-		/\*\/\s*$/.test(s)
+		expressionExpr.test(s) ||
+		keywordExpressionExpr.test(s) ||
+		keywordStatementExpr.test(s)
 	);
 }
 
