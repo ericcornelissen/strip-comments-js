@@ -2,17 +2,6 @@
 
 import assert from "node:assert";
 
-const S_CODE = 0;
-const S_LINE_COMMENT = 1;
-const S_BLOCK_COMMENT = 2;
-const S_STRING_SINGLE = 3;
-const S_STRING_DOUBLE = 4;
-const S_STRING_BACK = 5;
-const S_REGEXP = 6;
-const S_REGEXP_CHAR_RANGE = 7;
-const S_CONTROL_FLOW_START = 8;
-const S_CONTROL_FLOW_BODY = 9;
-
 const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
 const whitespaceExpr =
 	/[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/;
@@ -36,262 +25,272 @@ const whitespaceExpr =
  * @throws If `options.pattern` is not a RegExp.
  */
 export function strip(code, options) {
-	const { block, jsdoc, line, pattern, protected: protect, spdx } = options;
+	const { pattern } = options;
 	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");
 
 	const result = new StringBuilder();
 	const chars = new Scanner(code + "\n");
-	const stack = new Stack(S_CODE);
-	const comment = new StringBuilder();
 
-	while (chars.peek() !== undefined) {
-		const char = chars.next();
-		const state = stack.peek();
-
-		if (!inComment(state)) result.push(char);
-		else comment.push(char);
-
-		if (whitespaceExpr.test(char)) continue;
-		if (state === S_CONTROL_FLOW_BODY) stack.pop();
-
-		switch (char) {
-			case "{": {
-				if (inCode(state)) stack.push(S_CODE);
-				break;
-			}
-			case "}": {
-				if (inCode(state)) stack.pop();
-				break;
-			}
-			case "(": {
-				if (inCode(state)) stack.push(S_CODE);
-				break;
-			}
-			case ")": {
-				if (inCode(state)) stack.pop();
-
-				if (stack.peek() === S_CONTROL_FLOW_START) {
-					stack.pop();
-					stack.push(S_CONTROL_FLOW_BODY);
-				}
-
-				break;
-			}
-
-			// Comments
-			case "/": {
-				if (inCode(state)) {
-					const next = chars.peek();
-
-					const startLineComment = next === "/";
-					const startBlockComment = next === "*";
-
-					if (startLineComment) stack.push(S_LINE_COMMENT);
-					else if (startBlockComment) stack.push(S_BLOCK_COMMENT);
-					else if (startExpression(state, result)) stack.push(S_REGEXP);
-
-					if (startLineComment || startBlockComment) comment.push(result.pop());
-				} else if (state === S_REGEXP) {
-					stack.pop();
-				}
-
-				break;
-			}
-			case "*": {
-				if (state === S_BLOCK_COMMENT && chars.peek() === "/") {
-					if (comment.length > 2) {
-						comment.push(chars.next());
-
-						const content = comment
-							.slice(2, comment.length - 2)
-							.replaceAll(/[ \t]*\n[ \t]*\*/g, "");
-						if (
-							block &&
-							(jsdoc || !content.startsWith("*")) &&
-							(protect || !content.startsWith("!")) &&
-							pattern.test(content)
-						) {
-							trimEnd(result);
-
-							if (chars.peek() === "\n") {
-								if (result.last() === "\n") result.shrink();
-								if (result.last() === "\r") result.shrink();
-
-								if (result.isEmpty()) {
-									chars.next();
-									if (chars.isEmpty()) result.push("\n");
-								}
-							}
-						} else {
-							result.push(...comment.chars());
-						}
-
-						stack.pop();
-						comment.reset();
-					}
-				}
-
-				break;
-			}
-			case "\n": {
-				if (state === S_LINE_COMMENT) {
-					let content = comment.slice(2, comment.length - 1);
-					if (content.endsWith("\r")) content = content.slice(0, -1);
-
-					if (
-						line &&
-						(protect || !content.startsWith("!")) &&
-						(spdx || !spdxExpr.test(content)) &&
-						pattern.test(content)
-					) {
-						trimEnd(result);
-
-						if (result.last() === "\n") result.shrink();
-						if (result.last() === "\r") result.shrink();
-
-						if (!result.isEmpty() || chars.isEmpty()) {
-							if (chars.prev() === "\r") result.push("\r");
-							result.push("\n");
-						}
-					} else {
-						result.push(...comment.chars());
-					}
-
-					stack.pop();
-					comment.reset();
-				}
-
-				break;
-			}
-
-			// Control flow
-			case "e":
-			case "f":
-			case "o":
-			case "r": {
-				if (inCode(state)) {
-					const code = result.slice(0, -1) + char;
-					if (/(^|[\s;})])(while|if|do|for)$/.test(code)) {
-						const peek = chars.peek();
-						if (peek === "(" || whitespaceExpr.test(peek)) {
-							stack.push(S_CONTROL_FLOW_START);
-						}
-					}
-				}
-
-				break;
-			}
-
-			// Strings
-			case "'": {
-				if (inCode(state)) stack.push(S_STRING_SINGLE);
-				else if (state === S_STRING_SINGLE) stack.pop();
-				break;
-			}
-			case '"': {
-				if (inCode(state)) stack.push(S_STRING_DOUBLE);
-				else if (state === S_STRING_DOUBLE) stack.pop();
-				break;
-			}
-			case "`": {
-				if (inCode(state)) stack.push(S_STRING_BACK);
-				else if (state === S_STRING_BACK) stack.pop();
-				break;
-			}
-			case "$": {
-				if (state === S_STRING_BACK && chars.peek() === "{") {
-					stack.push(S_CODE);
-					result.push(chars.next());
-				}
-
-				break;
-			}
-
-			// Regular Expressions
-			case "[": {
-				if (state === S_REGEXP) stack.push(S_REGEXP_CHAR_RANGE);
-				break;
-			}
-			case "]": {
-				if (state === S_REGEXP_CHAR_RANGE) stack.pop();
-				break;
-			}
-
-			// Escaping
-			case "\\": {
-				if (inString(state) || inRegExp(state)) result.push(chars.next());
-				break;
-			}
-		}
-	}
+	$code(chars, result, options);
 
 	result.shrink();
 	return result.toString();
 }
 
 /**
- * Check if we are currently in code.
- *
- * @param {number} state The current state.
- * @returns {boolean} If `state` is one of the code states.
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
  */
-function inCode(state) {
-	return (
-		state === S_CODE ||
-		state === S_CONTROL_FLOW_START ||
-		state === S_CONTROL_FLOW_BODY
-	);
+function $blockComment(chars, result, options) {
+	const { jsdoc, block, pattern, protected: protect } = options;
+
+	const comment = new StringBuilder();
+	comment.push(result.pop());
+	comment.push(chars.next());
+
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		comment.push(char);
+
+		if (char === "*" && chars.peek() === "/") {
+			comment.push(chars.next());
+			break;
+		}
+	}
+
+	const content = comment
+		.slice(2, comment.length - 2)
+		.replaceAll(/[ \t]*\n[ \t]*\*/g, "");
+
+	if (
+		block &&
+		(jsdoc || !content.startsWith("*")) &&
+		(protect || !content.startsWith("!")) &&
+		pattern.test(content)
+	) {
+		trimEnd(result);
+
+		if (chars.peek() === "\n") {
+			if (result.last() === "\n") result.shrink();
+			if (result.last() === "\r") result.shrink();
+
+			if (result.isEmpty()) {
+				chars.next();
+				if (chars.isEmpty()) result.push("\n");
+			}
+		}
+	} else {
+		result.push(...comment.chars());
+	}
 }
 
 /**
- * Check if we are currently in a code comment.
- *
- * @param {number} state The current state.
- * @returns {boolean} If `state` is one of the comment states.
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
  */
-function inComment(state) {
-	return state === S_LINE_COMMENT || state === S_BLOCK_COMMENT;
+function $code(chars, result, options) {
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "{": {
+				$code(chars, result, options);
+				break;
+			}
+			case "}": {
+				return;
+			}
+
+			case "(": {
+				const code = result.slice(0, -1);
+
+				$code(chars, result, options);
+
+				if (/(^|[\s;})])(while|if|do|for)\s*$/.test(code)) {
+					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
+					if (chars.peek() === "/") {
+						result.push(chars.next());
+
+						const next = chars.peek();
+						if (next === "/") $lineComment(chars, result, options);
+						else if (next === "*") $blockComment(chars, result, options);
+						else $regexp(chars, result);
+					}
+				}
+
+				break;
+			}
+			case ")": {
+				return;
+			}
+
+			// Comments
+			case "/": {
+				const next = chars.peek();
+				if (next === "/") $lineComment(chars, result, options);
+				else if (next === "*") $blockComment(chars, result, options);
+				else if (startExpression(result)) $regexp(chars, result);
+
+				break;
+			}
+
+			// Strings
+			case "'":
+			case '"': {
+				$string(chars, result, char);
+				break;
+			}
+			case "`": {
+				$template(chars, result, options);
+				break;
+			}
+		}
+	}
 }
 
 /**
- * Check if we are currently in a regular expression literal.
- *
- * @param {number} state The current state.
- * @returns {boolean} If `state` is one of the regexp states.
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
  */
-function inRegExp(state) {
-	return state === S_REGEXP || state === S_REGEXP_CHAR_RANGE;
+function $lineComment(chars, result, options) {
+	const { line, pattern, protected: protect, spdx } = options;
+
+	const comment = new StringBuilder();
+	comment.push(result.pop());
+
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		comment.push(char);
+
+		if (char === "\n") break;
+	}
+
+	let content = comment.slice(2, comment.length - 1);
+	if (content.endsWith("\r")) content = content.slice(0, -1);
+
+	if (
+		line &&
+		(protect || !content.startsWith("!")) &&
+		(spdx || !spdxExpr.test(content)) &&
+		pattern.test(content)
+	) {
+		trimEnd(result);
+
+		if (result.last() === "\n") result.shrink();
+		if (result.last() === "\r") result.shrink();
+
+		if (!result.isEmpty() || chars.isEmpty()) {
+			if (chars.prev() === "\r") result.push("\r");
+			result.push("\n");
+		}
+	} else {
+		result.push(...comment.chars());
+	}
 }
 
 /**
- * Check if we are currently in a string literal.
- *
- * @param {number} state The current state.
- * @returns {boolean} If `state` is one of the string states.
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
  */
-function inString(state) {
-	return (
-		state === S_STRING_SINGLE ||
-		state === S_STRING_DOUBLE ||
-		state === S_STRING_BACK
-	);
+function $regexp(chars, result) {
+	let inCharRange = false;
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "\\": {
+				result.push(chars.next());
+				break;
+			}
+			case "[": {
+				inCharRange = true;
+				break;
+			}
+			case "]": {
+				inCharRange = false;
+				break;
+			}
+			case "/": {
+				if (!inCharRange) return;
+			}
+		}
+	}
+
+	assert(false);
 }
 
 /**
- *
- * @param {number} state The current state.
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {"'" | '"'} quote
+ */
+function $string(chars, result, quote) {
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "\\": {
+				result.push(chars.next());
+				break;
+			}
+			case quote: {
+				return;
+			}
+		}
+	}
+
+	assert(false);
+}
+
+/**
+ * @param {Scanner} chars
+ * @param {StringBuilder} result
+ * @param {Options} options
+ */
+function $template(chars, result, options) {
+	while (chars.peek() !== undefined) {
+		const char = chars.next();
+		result.push(char);
+
+		switch (char) {
+			case "\\": {
+				result.push(chars.next());
+				break;
+			}
+			case "$": {
+				if (chars.peek() === "{") {
+					result.push(chars.next());
+					$code(chars, result, options);
+				}
+				break;
+			}
+			case "`": {
+				return;
+			}
+		}
+	}
+
+	assert(false);
+}
+
+/**
  * @param {StringBuilder} snippet The program up to this point.
  * @returns {boolean} If `state` is one of the string states.
  */
-function startExpression(state, snippet) {
+function startExpression(snippet) {
 	const s = snippet.slice(0, -1);
 	return (
 		/(^|[([{};\n:,=+!>\-])\s*$/.test(s) ||
 		/(^|[\s){};])(in|of|return)\s*$/.test(s) ||
 		/}\s*else\s*$/.test(s) ||
 		/(^|[()[{};:,=+!>\-\s])(delete|void)(\s+(delete|void))*\s*$/.test(s) ||
-		/\*\/\s*$/.test(s) ||
-		state === S_CONTROL_FLOW_BODY
+		/\*\/\s*$/.test(s)
 	);
 }
 
@@ -308,53 +307,6 @@ function trimEnd(string) {
 		} else {
 			break;
 		}
-	}
-}
-
-/**
- * A LIFO stack that may not be empty.
- *
- * @template T
- */
-class Stack {
-	#stack;
-
-	/**
-	 * Initialize a new stack with one (mandatory) element, which can never be
-	 * removed.
-	 *
-	 * @param {T} base The initial element on the stack.
-	 */
-	constructor(base) {
-		this.#stack = [base];
-	}
-
-	/**
-	 * Inspect the top of the stack without consuming it.
-	 *
-	 * @returns {T} The top element
-	 */
-	peek() {
-		return this.#stack[this.#stack.length - 1];
-	}
-
-	/**
-	 * Remote the top of the stack.
-	 *
-	 * @throws {Error} Te stack has only one element when called.
-	 */
-	pop() {
-		this.#stack.length -= 1;
-		assert(this.#stack.length > 0);
-	}
-
-	/**
-	 * Add a new element to the top of the stack.
-	 *
-	 * @param {T} element The element to put on top of the stack.
-	 */
-	push(element) {
-		this.#stack.push(element);
 	}
 }
 
