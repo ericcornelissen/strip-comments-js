@@ -3,6 +3,7 @@
 import assert from "node:assert";
 
 const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
+const sourcemapExpr = /^# sourceMappingURL=/;
 const whitespaceExpr =
 	/[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/;
 
@@ -158,7 +159,7 @@ function $code(chars, result, options) {
  * @param {Options} options
  */
 function $lineComment(chars, result, options) {
-	const { line, pattern, protected: protect, spdx } = options;
+	const { line, pattern, protected: protect, sourcemap, spdx } = options;
 
 	const comment = new StringBuilder();
 	comment.push(result.pop());
@@ -176,6 +177,7 @@ function $lineComment(chars, result, options) {
 	if (
 		line &&
 		(protect || !content.startsWith("!")) &&
+		(sourcemap || !sourcemapExpr.test(content)) &&
 		(spdx || !spdxExpr.test(content)) &&
 		pattern.test(content)
 	) {

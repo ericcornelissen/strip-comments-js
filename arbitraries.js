@@ -40,21 +40,23 @@ function commentArbitrary(type) {
 		case "non-sourcemap":
 			return javascript
 				.comment()
-				.filter((s) => !/\s*\/\/# sourceMappingURL=/.test(s));
+				.filter((s) => !/^\s*\/\/# sourceMappingURL=/.test(s));
 		case "non-spdx":
 			return javascript
 				.comment()
-				.filter((s) => !/\s*\/\/ SPDX-License-Identifier: /.test(s));
+				.filter((s) => !/^\s*\/\/ SPDX-License-Identifier: /.test(s));
 		case "protected":
 			return javascript
 				.comment()
 				.map((s) => s.replace(/^(\s*)(\/[/*])/, "$1$2!"));
 		case "sourcemap":
-			return javascript.comment.line({
-				content: fc
-					.stringMatching(/^[A-Za-z0-9_.-]+$/)
-					.map((s) => `//# sourceMappingURL=${s}`),
-			});
+			return javascript.comment
+				.line({
+					content: fc
+						.stringMatching(/^[A-Za-z0-9_.-]+$/)
+						.map((s) => `# sourceMappingURL=${s}`),
+				})
+				.map((s) => s.replace(/^\s*\/\/\s*#/, "//#"));
 		case "spdx":
 			return javascript.comment
 				.line({
