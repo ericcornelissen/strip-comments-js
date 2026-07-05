@@ -34,6 +34,7 @@ export function strip(code, options) {
 	const chars = new Scanner(code + "\n");
 
 	if (!$code(chars, result, options, true)) return code;
+	if (!chars.isEmpty()) return code;
 
 	result.shrink();
 	return result.toString();
