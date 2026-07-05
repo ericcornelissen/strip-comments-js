@@ -12,16 +12,18 @@ import * as testdata from "./testdata.js";
 
 import { strip } from "./main.js";
 
+const baseOptions = Object.freeze({
+	pattern: /[^]?/,
+	block: true,
+	jsdoc: true,
+	line: true,
+	protected: true,
+	sourcemap: true,
+	spdx: true,
+});
+
 test("testdata", async () => {
-	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
-	};
+	const options = baseOptions;
 
 	for (const [file, filepath] of await testdata.files()) {
 		const wantpath = filepath.replace(/\.[a-z]+$/, ".want");
@@ -36,15 +38,7 @@ test("testdata", async () => {
 });
 
 test("newlines", async () => {
-	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
-	};
+	const options = baseOptions;
 
 	const testdata = {
 		"LF after line comment": ["var x;// foo\nvar y;", "var x;\nvar y;"],
@@ -67,15 +61,6 @@ test("newlines", async () => {
 });
 
 test("pattern", async () => {
-	const defaultOptions = {
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
-	};
-
 	const testdata = {
 		"pattern does match line comment": {
 			pattern: /foo.+/,
@@ -132,7 +117,7 @@ test("pattern", async () => {
 	for (const [name, testCase] of Object.entries(testdata)) {
 		await test(name, () => {
 			const options = {
-				...defaultOptions,
+				...baseOptions,
 				pattern: testCase.pattern,
 			};
 
@@ -155,7 +140,7 @@ test("pattern", async () => {
 		for (const [name, pattern] of Object.entries(testdata)) {
 			await test(name, () => {
 				const options = {
-					...defaultOptions,
+					...baseOptions,
 					pattern,
 				};
 
@@ -166,77 +151,193 @@ test("pattern", async () => {
 });
 
 test("pathological input", async () => {
-	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
-	};
+	await test("general", async () => {
+		const options = baseOptions;
 
-	const testdata = {
-		"only an empty line comment": ["//", ""],
-		"only a non-empty line comment": ["// ", ""],
-		"only a line comment with a newline": ["//\n", ""],
-		"only trailing line comment": ["x;//\n", "x;\n"],
-		"only an empty block comment": ["/**/", ""],
-		"only a non-empty block comment": ["/* */", ""],
-		"odd block comment 1": ["/*/**/", ""],
-		"odd block comment 2": ["/*/*/", ""],
-		"regexp with line comment, 1": ["/\\/\\// // a", "/\\/\\//"],
-		"regexp with line comment, 2": ["/\\/*/ // b", "/\\/*/"],
-		"regexp with line comment, 3": ["/[//]/ // c", "/[//]/"],
-		"regexp with line comment, 4": ["/[/*]/ // d", "/[/*]/"],
-		"regexp with block comment, 1": ["/\\/\\// /* a */", "/\\/\\//"],
-		"regexp with block comment, 2": ["/\\/*/ /* b */", "/\\/*/"],
-		"regexp with block comment, 3": ["/[//]/ /* c */", "/[//]/"],
-		"regexp with block comment, 4": ["/[/*]/ /* d */", "/[/*]/"],
-		"regexp colon": ["let a={b:/'/}; // test", "let a={b:/'/};"],
-		"regexp opening parenthesis": ["f(/'/i); // test", "f(/'/i);"],
-		"regexp after comma": ["f('n/a', /}/i); // test", "f('n/a', /}/i);"],
-		"regexp in return": ["() => return/'/; // test", "() => return/'/;"],
-		"regexp in unary plus": ["if (+/\\}/) { } // test", "if (+/\\}/) { }"],
-		"regexp in unary minus": ["if (-/\\}/) { } // test", "if (-/\\}/) { }"],
-		"regexp in array expression": ["[/'/] // test", "[/'/]"],
-		"regexp in delete expression": ["delete /'/ // test", "delete /'/"],
-		"regexp in void expression": ["void /'/ // test", "void /'/"],
-		"regexp in nested delete/void": ["delete void/'///**/", "delete void/'/"],
-		"regexp begin of block statement": ["{/}/} // test", "{/}/}"],
-		"regexp after block statement": ["{}/'/ // test", "{}/'/"],
-		"regexp in for-in": ["for(var x in/'/)/**/x", "for(var x in/'/)x"],
-		"regexp in for-of": ["for(var x of/'/)/**/x", "for(var x of/'/)x"],
-		"regexp in an in-operator": ["'x' in /'/g // test", "'x' in /'/g"],
-		"regexp in-op delete": ["'x' in delete /'/g // test", "'x' in delete /'/g"],
-		"regexp as else body": ["if(a){} else/}/; // test", "if(a){} else/}/;"],
-		"regexp as if body": ["if (a) /}/; // test", "if (a) /}/;"],
-		"regexp as for body": ["for(x in y) /}/; // test", "for(x in y) /}/;"],
-		"regexp as while body": ["while(a)/}/; // test", "while(a)/}/;"],
-		"regexp with a '/' in a character class": ["/[/']/ // test", "/[/']/"],
-		"division with line comment, 1": ["3/14 // a", "3/14"],
-		"division with line comment, 2": ["(3+1)/(4) // a", "(3+1)/(4)"],
-		"division with block comment, 1": ["6 / 7 /* b */", "6 / 7"],
-		"division with block comment, 2": ["(6) / (8-1) /* b */", "(6) / (8-1)"],
-	};
+		const testdata = {
+			"only an empty line comment": ["//", ""],
+			"only a non-empty line comment": ["// test", ""],
+			"only an empty line comment with a newline": ["//\n", ""],
+			"only a non-empty line comment with a newline": ["// test\n", ""],
+			"only an empty block comment": ["/**/", ""],
+			"only a non-empty block comment": ["/* test */", ""],
+			"a trailing line comment": ["x;// test\n", "x;\n"],
+			"a trailing block comment": ["x;/* test */\n", "x;\n"],
+			"odd block comment 1": ["/*/**/", ""],
+			"odd block comment 2": ["/*/*/", ""],
+			"regexp starting block w/ line comment": ["/\\/*/ // a", "/\\/*/"],
+			"regexp starting block w/ block comment": ["/\\/*/ /*b*/", "/\\/*/"],
+			"char class starting block w/ line comment": ["/[/*]/ // c", "/[/*]/"],
+			"char class starting block w/ block comment": ["/[/*]/ /*d*/", "/[/*]/"],
+			"char class starting line w/ line comment": ["/[//]/ // e", "/[//]/"],
+			"char class starting line w/ block comment": ["/[//]/ /*f*/", "/[//]/"],
+			"division, line comment": ["3/14 // a", "3/14"],
+			"division, line comment, parentheses": ["(3+1)/(4) // b", "(3+1)/(4)"],
+			"division, block comment": ["6 / 7 /* c */", "6 / 7"],
+			"division, block comment, parentheses": ["(6)/(8-1) /*d*/", "(6)/(8-1)"],
+		};
 
-	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await test(name, () => {
-			assert.equal(strip(inp, options), out);
+		for (const [name, [inp, out]] of Object.entries(testdata)) {
+			await test(name, () => {
+				assert.equal(strip(inp, options), out);
+			});
+		}
+	});
+
+	await test("regexp", async () => {
+		await test("general", async () => {
+			const options = baseOptions;
+
+			const templates = {
+				"assignment value": "let obj = %s;",
+				"object value": "let obj = { prop: %s };",
+				"object key": "let obj = { [%s]: 42 };",
+				"1st array value": "let arr = [%s];",
+				"nth array value": "let arr = [0, %s];",
+				"object dynamic access": "obj[%s];",
+				"template literal expression": "let tle = `${%s}`;",
+				"1st function argument": "f(%s);",
+				"nth function argument": "f('n/a', %s);",
+				"return expression": "function f() { return %s; }",
+				"await expression": "await %s;",
+				"default parameter expression": "function f(r=%s) {}",
+				"arrow function expression": "() => %s;",
+				"start of a block statement": "{%s}",
+				"after a block statement": "{}%s",
+				"if body": "if (g) %s;",
+				"else body": "if (g) { } else %s;",
+				"for body": "for (x in y) %s;",
+				"while body": "while (g) %s;",
+				"do-while body": "do %s; while (g)",
+				"for-in": "for (var x in %s) x",
+				"for-of": "for (var x of %s) x",
+				"expression statement": ";%s;",
+				"in-operator": "if (x in %s) f();",
+				"nth in comma operator": "1,%s;",
+				"delete expression": "delete %s;",
+				"instanceof expression": "x => x instanceof %s;",
+				"typeof expression": "typeof %s;",
+				"void expression": "void %s;",
+				"unary plus": "var p = +%s;",
+				"unary minus": "var m = -%s;",
+				"bitwise not": "var bnot = ~%s;",
+				"logcal not": "var lnot = !%s;",
+				"arithmetic addition": "var a = 1 + %s;",
+				"arithmetic subtraction": "var s = 1 - %s;",
+				"arithmetic multiplication": "var m = 1 * %s;",
+				"arithmetic division": "var d = 1 / %s;",
+				"arithmetic remainer": "var r = 1 % %s;",
+				"arithmetic exponentiation": "var e = 1 ** %s;",
+				"left shift": "var ls = 1 << %s;",
+				"right shift": "var rs = 1 >> %s;",
+				"unsigned right shift": "var urs = 1 >>> %s;",
+				"bitwise AND": "var band = 1 & %s;",
+				"bitwise XOR": "var bxor = 1 ^ %s;",
+				"bitwise OR": "var bor = 1 | %s;",
+				"logical AND": "var land = true && %s;",
+				"logical OR": "var lor = true || %s;",
+				"nullish coalescing": "var n = null ?? %s;",
+				"greater than": "var gt = 42 > %s;",
+				"greater than or equal": "var gte = 42 >= %s;",
+				"less than": "var lt = 42 < %s;",
+				"less than or equal": "var lte = 42 <= %s;",
+				"equals check": "if (a == %s) f();",
+				"not equals check": "if (a != %s) f();",
+				"strict equals check": "if (a === %s) f();",
+				"strict not equals check": "if (a !== %s) f();",
+				"ternary, first branch": "var f = g ? %s : 2;",
+				"ternary, second branch": "var s = g ? 1 : %s;",
+			};
+
+			const expressions = [
+				"/'/",
+				"delete /'/",
+				"typeof /'/",
+				"instanceof /'/",
+				"void /'/",
+			];
+
+			for (const expression of expressions) {
+				await test(expression, async () => {
+					for (const [name, template] of Object.entries(templates)) {
+						await test(`"${name}"`, () => {
+							const out = template.replace("%s", expression);
+							const inp = `${out} // test`;
+							assert.equal(strip(inp, options), out);
+						});
+					}
+				});
+			}
 		});
-	}
+
+		await test("keywords without a space", async () => {
+			const options = baseOptions;
+
+			const templates = {
+				"await expression": "await%s;",
+				"delete expression": "delete%s;",
+				"instanceof expression": "x => x instanceof%s;",
+				"typeof expression": "typeof%s;",
+				"void expression": "void%s;",
+				"return expression": "function f(){return%s;}",
+				"in expression": "if (x in%s) f()",
+				"for-in": "for (var x in%s) x",
+				"for-of": "for (var x of%s) x",
+				"else body": "if (a) { } else%s;",
+				"do-while body": "do%s; while (g)",
+			};
+
+			for (const [name, template] of Object.entries(templates)) {
+				await test(name, () => {
+					const out = template.replace("%s", "/'/");
+					const inp = `${out} // test`;
+					assert.equal(strip(inp, options), out);
+				});
+			}
+		});
+
+		await test("after preserved comment", async () => {
+			const expressions = ["/'/", "delete /'/"];
+
+			await test("block", async () => {
+				const options = {
+					...baseOptions,
+					block: false,
+				};
+
+				const template = "/**/%s;";
+
+				for (const expression of expressions) {
+					await test(expression, async () => {
+						const out = template.replace("%s", expression);
+						const inp = `${out} // test`;
+						assert.equal(strip(inp, options), out);
+					});
+				}
+			});
+
+			await test("line", async () => {
+				const options = {
+					...baseOptions,
+					line: false,
+				};
+
+				const template = "// test\n%s;";
+
+				for (const expression of expressions) {
+					await test(expression, async () => {
+						const out = template.replace("%s", expression);
+						const inp = `${out} /*test*/`;
+						assert.equal(strip(inp, options), out);
+					});
+				}
+			});
+		});
+	});
 });
 
 test("invalid source code", async () => {
-	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
-	};
+	const options = baseOptions;
 
 	const testdata = {
 		"unclosed block statement": "/*invalid*/ function foo() { var bar = 42;",
@@ -259,13 +360,8 @@ test("invalid source code", async () => {
 
 test("preserve block comments", async () => {
 	const options = {
-		pattern: /[^]?/,
+		...baseOptions,
 		block: false,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
 	};
 
 	await test("any block comment", () => {
@@ -302,13 +398,8 @@ test("preserve block comments", async () => {
 
 test("preserve JSDoc comments", async () => {
 	const options = {
-		pattern: /[^]?/,
-		block: true,
+		...baseOptions,
 		jsdoc: false,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
 	};
 
 	await test("any JSDoc comment", () => {
@@ -354,13 +445,8 @@ test("preserve JSDoc comments", async () => {
 
 test("preserve line comments", async () => {
 	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
+		...baseOptions,
 		line: false,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
 	};
 
 	await test("any line comment", () => {
@@ -397,13 +483,8 @@ test("preserve line comments", async () => {
 
 test("preserve protected comments", async () => {
 	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
+		...baseOptions,
 		protected: false,
-		sourcemap: true,
-		spdx: true,
 	};
 
 	await test("any protected comment", () => {
@@ -440,13 +521,8 @@ test("preserve protected comments", async () => {
 
 test("preserve sourcemap comments", async () => {
 	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
+		...baseOptions,
 		sourcemap: false,
-		spdx: true,
 	};
 
 	await test("any sourcemap comment", () => {
@@ -470,12 +546,7 @@ test("preserve sourcemap comments", async () => {
 
 test("preserve SPDX ID comments", async () => {
 	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
+		...baseOptions,
 		spdx: false,
 	};
 
@@ -499,15 +570,7 @@ test("preserve SPDX ID comments", async () => {
 });
 
 test("input-output length", () => {
-	const options = {
-		pattern: /[^]?/,
-		block: true,
-		jsdoc: true,
-		line: true,
-		protected: true,
-		sourcemap: true,
-		spdx: true,
-	};
+	const options = baseOptions;
 
 	fc.assert(
 		fc.property(arb.codeWithComment(), ({ code }) => {
