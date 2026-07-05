@@ -11,6 +11,7 @@ const any = /[^]?/;
  * @property {boolean} [line=true] Whether to strip line comments.
  * @property {boolean} [jsdoc=true] Whether to strip JSDoc comments.
  * @property {boolean} [protected=true] Whether to strip protected comments.
+ * @property {boolean} [sourcemap=true] Whether to strip sourcemap comments.
  * @property {boolean} [spdx=false] Whether to strip SPDX short-form identifiers.
  */
 
@@ -31,6 +32,7 @@ export function stripComments(code, options) {
 	options.jsdoc ??= true;
 	options.line ??= true;
 	options.protected ??= true;
+	options.sourcemap ??= true;
 	options.spdx ??= false;
 
 	return strip(code, options);

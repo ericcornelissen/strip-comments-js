@@ -33,6 +33,9 @@ const line = idx === -1 ? undefined : !files.splice(idx, 1);
 idx = files.indexOf("--keep-protected");
 const protect = idx === -1 ? undefined : !files.splice(idx, 1);
 
+idx = files.indexOf("--keep-sourcemap");
+const sourcemap = idx === -1 ? undefined : !files.splice(idx, 1);
+
 idx = files.indexOf("--strip-spdx");
 const spdx = idx === -1 ? undefined : !!files.splice(idx, 1);
 
@@ -49,6 +52,7 @@ const options = {
 	line,
 	pattern,
 	protected: protect,
+	sourcemap,
 	spdx,
 	version,
 };
@@ -66,6 +70,7 @@ Flags:
   --keep-jsdoc          Don't strip JSDoc comments.
   --keep-line           Don't strip line comments.
   --keep-protected      Don't strip protected comments.
+  --keep-sourcemap      Don't strip sourcemap comments.
   --pattern <pattern>   A regular expression of comments to strip.
   --strip-spdx          Do strip SPDX short-form identifiers.
   --version             Output version information.
