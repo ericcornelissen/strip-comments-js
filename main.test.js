@@ -213,6 +213,7 @@ test("pathological input", async () => {
 		"regexp as if body": ["if (a) /}/; // test", "if (a) /}/;"],
 		"regexp as for body": ["for(x in y) /}/; // test", "for(x in y) /}/;"],
 		"regexp as while body": ["while(a)/}/; // test", "while(a)/}/;"],
+		"regexp with a '/' in a character class": ["/[/']/ // test", "/[/']/"],
 		"division with line comment, 1": ["3/14 // a", "3/14"],
 		"division with line comment, 2": ["(3+1)/(4) // a", "(3+1)/(4)"],
 		"division with block comment, 1": ["6 / 7 /* b */", "6 / 7"],
@@ -222,6 +223,36 @@ test("pathological input", async () => {
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
 		await test(name, () => {
 			assert.equal(strip(inp, options), out);
+		});
+	}
+});
+
+test("invalid source code", async () => {
+	const options = {
+		pattern: /[^]?/,
+		block: true,
+		jsdoc: true,
+		line: true,
+		protected: true,
+		sourcemap: true,
+		spdx: true,
+	};
+
+	const testdata = {
+		"unclosed block statement": "/*invalid*/ function foo() { var bar = 42;",
+		"unclosed argument list": "/*invalid*/ function foo( { var bar = 42; }",
+		"unclosed object literal": "/*invalid*/ var foo = { bar: 42",
+		"unclosed string, single quote": "/*invalid*/ var foo = 'bar",
+		"unclosed string, double quote": '/*invalid*/ var foo = "bar',
+		"unclosed string, backticks": "/*invalid*/ var foo = `bar",
+		"unclosed template literal expression": "/*invalid*/ var foo = `${bar`",
+		"unclosed block comment": "/*invalid*/ var foo = 'bar'; /*",
+		"unclosed regular expression": "/*invalid*/ var foo = /bar",
+	};
+
+	for (const [name, inp] of Object.entries(testdata)) {
+		await test(name, () => {
+			assert.equal(strip(inp, options), inp);
 		});
 	}
 });
