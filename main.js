@@ -33,7 +33,7 @@ export function strip(code, options) {
 	const result = new StringBuilder();
 	const chars = new Scanner(code + "\n");
 
-	$code(chars, result, options);
+	if (!$code(chars, result, options, true)) return code;
 
 	result.shrink();
 	return result.toString();
@@ -43,6 +43,7 @@ export function strip(code, options) {
  * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Options} options
+ * @returns {boolean}
  */
 function $blockComment(chars, result, options) {
 	const { jsdoc, block, pattern, protected: protect } = options;
@@ -57,59 +58,64 @@ function $blockComment(chars, result, options) {
 
 		if (char === "*" && chars.peek() === "/") {
 			comment.push(chars.next());
-			break;
-		}
-	}
 
-	const content = comment
-		.slice(2, comment.length - 2)
-		.replaceAll(/[ \t]*\n[ \t]*\*/g, "");
+			const content = comment
+				.slice(2, comment.length - 2)
+				.replaceAll(/[ \t]*\n[ \t]*\*/g, "");
 
-	if (
-		block &&
-		(jsdoc || !content.startsWith("*")) &&
-		(protect || !content.startsWith("!")) &&
-		pattern.test(content)
-	) {
-		trimEnd(result);
+			if (
+				block &&
+				(jsdoc || !content.startsWith("*")) &&
+				(protect || !content.startsWith("!")) &&
+				pattern.test(content)
+			) {
+				trimEnd(result);
 
-		if (chars.peek() === "\n") {
-			if (result.last() === "\n") result.shrink();
-			if (result.last() === "\r") result.shrink();
+				if (chars.peek() === "\n") {
+					if (result.last() === "\n") result.shrink();
+					if (result.last() === "\r") result.shrink();
 
-			if (result.isEmpty()) {
-				chars.next();
-				if (chars.isEmpty()) result.push("\n");
+					if (result.isEmpty()) {
+						chars.next();
+						if (chars.isEmpty()) result.push("\n");
+					}
+				}
+			} else {
+				result.push(...comment.chars());
 			}
+
+			return true;
 		}
-	} else {
-		result.push(...comment.chars());
 	}
+
+	return false;
 }
 
 /**
  * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Options} options
+ * @param {boolean} [top]
+ * @returns {boolean}
  */
-function $code(chars, result, options) {
+function $code(chars, result, options, top = false) {
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		result.push(char);
 
 		switch (char) {
 			case "{": {
-				$code(chars, result, options);
+				if (!$code(chars, result, options)) return false;
 				break;
 			}
 			case "}": {
-				return;
+				return true;
 			}
 
 			case "(": {
 				const code = result.slice(0, -1);
 
-				$code(chars, result, options);
+				if (!$code(chars, result, options)) return false;
 
 				if (/(^|[\s;})])(while|if|do|for)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
@@ -117,40 +123,48 @@ function $code(chars, result, options) {
 						result.push(chars.next());
 
 						const next = chars.peek();
-						if (next === "/") $lineComment(chars, result, options);
-						else if (next === "*") $blockComment(chars, result, options);
-						else $regexp(chars, result);
+						if (next === "/") {
+							$lineComment(chars, result, options);
+						} else if (next === "*") {
+							if (!$blockComment(chars, result, options)) return false;
+						} else {
+							if (!$regexp(chars, result)) return false;
+						}
 					}
 				}
 
 				break;
 			}
 			case ")": {
-				return;
+				return true;
 			}
 
-			// Comments
-			case "/": {
-				const next = chars.peek();
-				if (next === "/") $lineComment(chars, result, options);
-				else if (next === "*") $blockComment(chars, result, options);
-				else if (startExpression(result)) $regexp(chars, result);
-
-				break;
-			}
-
-			// Strings
 			case "'":
 			case '"': {
-				$string(chars, result, char);
+				if (!$string(chars, result, char)) return false;
 				break;
 			}
 			case "`": {
-				$template(chars, result, options);
+				if (!$template(chars, result, options)) return false;
+				break;
+			}
+
+			case "/": {
+				const next = chars.peek();
+				if (next === "/") {
+					$lineComment(chars, result, options);
+				} else if (next === "*") {
+					if (!$blockComment(chars, result, options)) return false;
+				} else if (startExpression(result)) {
+					if (!$regexp(chars, result)) return false;
+				}
+
 				break;
 			}
 		}
 	}
+
+	return top;
 }
 
 /**
@@ -198,6 +212,7 @@ function $lineComment(chars, result, options) {
 /**
  * @param {Scanner} chars
  * @param {StringBuilder} result
+ * @returns {boolean}
  */
 function $regexp(chars, result) {
 	let inCharRange = false;
@@ -219,18 +234,19 @@ function $regexp(chars, result) {
 				break;
 			}
 			case "/": {
-				if (!inCharRange) return;
+				if (!inCharRange) return true;
 			}
 		}
 	}
 
-	assert(false);
+	return false;
 }
 
 /**
  * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {"'" | '"'} quote
+ * @returns {boolean}
  */
 function $string(chars, result, quote) {
 	while (chars.peek() !== undefined) {
@@ -243,18 +259,19 @@ function $string(chars, result, quote) {
 				break;
 			}
 			case quote: {
-				return;
+				return true;
 			}
 		}
 	}
 
-	assert(false);
+	return false;
 }
 
 /**
  * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Options} options
+ * @returns {boolean}
  */
 function $template(chars, result, options) {
 	while (chars.peek() !== undefined) {
@@ -274,12 +291,12 @@ function $template(chars, result, options) {
 				break;
 			}
 			case "`": {
-				return;
+				return true;
 			}
 		}
 	}
 
-	assert(false);
+	return false;
 }
 
 /**
