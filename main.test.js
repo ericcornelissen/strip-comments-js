@@ -248,6 +248,8 @@ test("invalid source code", async () => {
 		"unclosed template literal expression": "/*invalid*/ var foo = `${bar`",
 		"unclosed block comment": "/*invalid*/ var foo = 'bar'; /*",
 		"unclosed regular expression": "/*invalid*/ var foo = /bar",
+		"unmatched closing '}'": "var foo = 'bar'} /*invalid*/",
+		"unmatched closing ')'": "function foo) { var bar = 42; } /*invalid*/",
 	};
 
 	for (const [name, inp] of Object.entries(testdata)) {
