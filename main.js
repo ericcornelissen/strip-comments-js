@@ -172,8 +172,9 @@ function $code(chars, result, options, top = false) {
  * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Options} options
+ * @param {boolean} [multiline]
  */
-function $lineComment(chars, result, options) {
+function $lineComment(chars, result, options, multiline = false) {
 	const { line, pattern, protected: protect, sourcemap, spdx } = options;
 
 	const comment = new StringBuilder();
@@ -186,9 +187,27 @@ function $lineComment(chars, result, options) {
 		if (char === "\n") break;
 	}
 
-	let content = comment.slice(2, comment.length - 1);
-	if (content.endsWith("\r")) content = content.slice(0, -1);
+	while (chars.peek() !== undefined) {
+		const char = chars.peek();
+		if (whitespaceExpr.test(char)) {
+			comment.push(chars.next());
+			continue;
+		}
 
+		if (char === "/" && chars.peek(2) === "/") {
+			chars.next();
+			comment.push(...$lineComment(chars, ["/"], options, true));
+		}
+
+		break;
+	}
+
+	if (multiline) return comment.toString();
+
+	const content = comment
+		.slice(2, comment.length - 1)
+		.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
+		.replace(/\r$/, "");
 	if (
 		line &&
 		(protect || !content.startsWith("!")) &&
@@ -205,6 +224,9 @@ function $lineComment(chars, result, options) {
 			if (chars.prev() === "\r") result.push("\r");
 			result.push("\n");
 		}
+
+		const trailing = comment.toString().split(/\r?\n/).at(-1);
+		if (trailing.length > 0) result.push(...trailing);
 	} else {
 		result.push(...comment.chars());
 	}
@@ -364,9 +386,9 @@ class Scanner {
 	}
 
 	/**
-	 * Consume the current element in the list.
+	 * Consume the next element in the list.
 	 *
-	 * @returns {T} The current element.
+	 * @returns {T} The next element.
 	 * @throws {Error} The scanner is finished when called.
 	 */
 	next() {
@@ -376,12 +398,13 @@ class Scanner {
 	}
 
 	/**
-	 * Preview the current element in the list without consuming it.
+	 * Preview the next element in the list without consuming it.
 	 *
-	 * @returns {T} The current element.
+	 * @param {number} [n=1] How many characters to look ahead.
+	 * @returns {T} The (nth) next element.
 	 */
-	peek() {
-		return this.#list[this.#idx];
+	peek(n = 1) {
+		return this.#list[this.#idx + (n - 1)];
 	}
 
 	/**

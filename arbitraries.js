@@ -18,7 +18,7 @@ export function codeWithComment(type) {
 			}
 
 			const code = `${pre}${comment}${post}`;
-			return { code, comment, options };
+			return { code, comment, options, pre, post };
 		});
 }
 
