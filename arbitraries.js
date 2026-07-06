@@ -4,6 +4,14 @@ import * as fc from "fast-check";
 
 import { javascript } from "@ericcornelissen/arbitrary-javascript";
 
+const charsets = {
+	alphabetic: () => [...charsets.lowercase(), ...charsets.uppercase()],
+	alphanumeric: () => [...charsets.alphabetic(), ...charsets.numeric()],
+	lowercase: () => "abcdefghijklmnopqrstuvwxyz".split(""),
+	numeric: () => "0123456789".split(""),
+	uppercase: () => "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+};
+
 export function codeWithComment(type) {
 	return fc
 		.record({
@@ -53,7 +61,10 @@ function commentArbitrary(type) {
 			return javascript.comment
 				.line({
 					content: fc
-						.stringMatching(/^[A-Za-z0-9_.-]+$/)
+						.string({
+							minLength: 1,
+							unit: fc.constantFrom(...charsets.alphanumeric(), "_", ".", "-"),
+						})
 						.map((s) => `# sourceMappingURL=${s}`),
 				})
 				.map((s) => s.replace(/^\s*\/\/\s*#/, "//#"));
@@ -61,7 +72,10 @@ function commentArbitrary(type) {
 			return javascript.comment
 				.line({
 					content: fc
-						.stringMatching(/^[A-Za-z0-9-]+$/)
+						.string({
+							minLength: 1,
+							unit: fc.constantFrom(...charsets.alphanumeric(), "-"),
+						})
 						.map((s) => `SPDX-License-Identifier: ${s}`),
 				})
 				.map((s) => s.replace(/\/\/\s*/, "// "));
