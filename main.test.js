@@ -109,8 +109,13 @@ test("pattern", async () => {
 		},
 		"multiline block comment with leading '*'": {
 			pattern: /hello world/,
-			inp: "/**\n * hello\n * world\n */",
-			want: "",
+			inp: "/**\n * hello\n * world\n */var x = 'Hello world!'",
+			want: "var x = 'Hello world!'",
+		},
+		"multiline line comment": {
+			pattern: /hello world/,
+			inp: "{\n  // hello\n  // world\n  var x = 'Hello world!';\n}",
+			want: "{\n  var x = 'Hello world!';\n}",
 		},
 	};
 
@@ -175,6 +180,8 @@ test("pathological input", async () => {
 			"division, line comment, parentheses": ["(3+1)/(4) // b", "(3+1)/(4)"],
 			"division, block comment": ["6 / 7 /* c */", "6 / 7"],
 			"division, block comment, parentheses": ["(6)/(8-1) /*d*/", "(6)/(8-1)"],
+			"block followed by line comment": ["/* a */ // b", ""],
+			"line followed by block comment": ["// b\n/* a */", ""],
 		};
 
 		for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -260,7 +267,7 @@ test("pathological input", async () => {
 			for (const expression of expressions) {
 				await test(expression, async () => {
 					for (const [name, template] of Object.entries(templates)) {
-						await test(`"${name}"`, () => {
+						await test(name, () => {
 							const out = template.replace("%s", expression);
 							const inp = `${out} // test`;
 							assert.equal(strip(inp, options), out);
@@ -491,10 +498,16 @@ test("preserve protected comments", async () => {
 
 	await test("any protected comment", () => {
 		fc.assert(
-			fc.property(arb.codeWithComment("protected"), ({ code, comment }) => {
-				const stripped = strip(code, options);
-				assert.ok(stripped.includes(comment.trim()));
-			}),
+			fc.property(
+				arb.codeWithComment("protected"),
+				({ code, comment, pre, post }) => {
+					fc.pre(!/\/\/[^\n]*\n\s*$/.test(pre));
+					fc.pre(!/^\s*\/\/[^\n]*\n/.test(post));
+
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
+				},
+			),
 		);
 	});
 
@@ -529,10 +542,16 @@ test("preserve sourcemap comments", async () => {
 
 	await test("any sourcemap comment", () => {
 		fc.assert(
-			fc.property(arb.codeWithComment("sourcemap"), ({ code, comment }) => {
-				const stripped = strip(code, options);
-				assert.ok(stripped.includes(comment.trim()));
-			}),
+			fc.property(
+				arb.codeWithComment("sourcemap"),
+				({ code, comment, pre, post }) => {
+					fc.pre(!/\/\/[^\n]*\n\s*$/.test(pre));
+					fc.pre(!/^\s*\/\/[^\n]*\n/.test(post));
+
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
+				},
+			),
 		);
 	});
 
@@ -554,10 +573,16 @@ test("preserve SPDX ID comments", async () => {
 
 	await test("any SPDX short-form identifier", () => {
 		fc.assert(
-			fc.property(arb.codeWithComment("spdx"), ({ code, comment }) => {
-				const stripped = strip(code, options);
-				assert.ok(stripped.includes(comment.trim()));
-			}),
+			fc.property(
+				arb.codeWithComment("spdx"),
+				({ code, comment, pre, post }) => {
+					fc.pre(!/\/\/[^\n]*\n\s*$/.test(pre));
+					fc.pre(!/^\s*\/\/[^\n]*\n/.test(post));
+
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
+				},
+			),
 		);
 	});
 

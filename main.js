@@ -118,19 +118,14 @@ function $code(chars, result, options, top = false) {
 
 				if (!$code(chars, result, options)) return false;
 
-				if (/(^|[\s;})])(while|if|do|for)\s*$/.test(code)) {
+				if (/(^|[\s;})])(do|for|if|while)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
-					if (chars.peek() === "/") {
-						result.push(chars.next());
 
-						const next = chars.peek();
-						if (next === "/") {
-							$lineComment(chars, result, options);
-						} else if (next === "*") {
-							if (!$blockComment(chars, result, options)) return false;
-						} else {
-							if (!$regexp(chars, result)) return false;
-						}
+					const next = chars.peek();
+					const nextnext = chars.peek(2);
+					if (next === "/" && nextnext !== "/" && nextnext !== "*") {
+						result.push(chars.next());
+						if (!$regexp(chars, result)) return false;
 					}
 				}
 
@@ -172,8 +167,9 @@ function $code(chars, result, options, top = false) {
  * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Options} options
+ * @param {boolean} [multiline]
  */
-function $lineComment(chars, result, options) {
+function $lineComment(chars, result, options, multiline = false) {
 	const { line, pattern, protected: protect, sourcemap, spdx } = options;
 
 	const comment = new StringBuilder();
@@ -182,13 +178,21 @@ function $lineComment(chars, result, options) {
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		comment.push(char);
-
 		if (char === "\n") break;
 	}
 
-	let content = comment.slice(2, comment.length - 1);
-	if (content.endsWith("\r")) content = content.slice(0, -1);
+	while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
+	if (chars.peek() === "/" && chars.peek(2) === "/") {
+		chars.next();
+		comment.push(...$lineComment(chars, ["/"], options, true));
+	}
 
+	if (multiline) return comment.toString();
+
+	const content = comment
+		.slice(2, comment.length - 1)
+		.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
+		.replace(/\r$/, "");
 	if (
 		line &&
 		(protect || !content.startsWith("!")) &&
@@ -205,6 +209,9 @@ function $lineComment(chars, result, options) {
 			if (chars.prev() === "\r") result.push("\r");
 			result.push("\n");
 		}
+
+		const trailing = comment.toString().split(/\r?\n/).at(-1);
+		if (trailing.length > 0) result.push(...trailing);
 	} else {
 		result.push(...comment.chars());
 	}
@@ -325,7 +332,7 @@ function startExpression(snippet) {
  * @param {StringBuilder} string The string the strip.
  */
 function trimEnd(string) {
-	for (let i = string.length - 1; i > 0; i--) {
+	for (let i = string.length - 1; i >= 0; i--) {
 		const cur = string.get(i);
 		if (whitespaceExpr.test(cur)) {
 			string.shrink();
@@ -364,9 +371,9 @@ class Scanner {
 	}
 
 	/**
-	 * Consume the current element in the list.
+	 * Consume the next element in the list.
 	 *
-	 * @returns {T} The current element.
+	 * @returns {T} The next element.
 	 * @throws {Error} The scanner is finished when called.
 	 */
 	next() {
@@ -376,12 +383,13 @@ class Scanner {
 	}
 
 	/**
-	 * Preview the current element in the list without consuming it.
+	 * Preview the next element in the list without consuming it.
 	 *
-	 * @returns {T} The current element.
+	 * @param {number} [n=1] How many characters to look ahead.
+	 * @returns {T} The (nth) next element.
 	 */
-	peek() {
-		return this.#list[this.#idx];
+	peek(n = 1) {
+		return this.#list[this.#idx + (n - 1)];
 	}
 
 	/**
