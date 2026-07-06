@@ -347,7 +347,7 @@ function startExpression(snippet) {
  * @param {StringBuilder} string The string the strip.
  */
 function trimEnd(string) {
-	for (let i = string.length - 1; i > 0; i--) {
+	for (let i = string.length - 1; i >= 0; i--) {
 		const cur = string.get(i);
 		if (whitespaceExpr.test(cur)) {
 			string.shrink();

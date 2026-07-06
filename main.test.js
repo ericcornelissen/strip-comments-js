@@ -180,7 +180,7 @@ test("pathological input", async () => {
 			"division, line comment, parentheses": ["(3+1)/(4) // b", "(3+1)/(4)"],
 			"division, block comment": ["6 / 7 /* c */", "6 / 7"],
 			"division, block comment, parentheses": ["(6)/(8-1) /*d*/", "(6)/(8-1)"],
-			"block followed by line comment": ["/* a */ // b", " "],
+			"block followed by line comment": ["/* a */ // b", ""],
 			"line followed by block comment": ["// b\n/* a */", ""],
 		};
 
