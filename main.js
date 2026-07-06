@@ -118,19 +118,14 @@ function $code(chars, result, options, top = false) {
 
 				if (!$code(chars, result, options)) return false;
 
-				if (/(^|[\s;})])(while|if|do|for)\s*$/.test(code)) {
+				if (/(^|[\s;})])(do|for|if|while)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
-					if (chars.peek() === "/") {
-						result.push(chars.next());
 
-						const next = chars.peek();
-						if (next === "/") {
-							$lineComment(chars, result, options);
-						} else if (next === "*") {
-							if (!$blockComment(chars, result, options)) return false;
-						} else {
-							if (!$regexp(chars, result)) return false;
-						}
+					const next = chars.peek();
+					const nextnext = chars.peek(2);
+					if (next === "/" && nextnext !== "/" && nextnext !== "*") {
+						result.push(chars.next());
+						if (!$regexp(chars, result)) return false;
 					}
 				}
 
@@ -183,23 +178,13 @@ function $lineComment(chars, result, options, multiline = false) {
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		comment.push(char);
-
 		if (char === "\n") break;
 	}
 
-	while (chars.peek() !== undefined) {
-		const char = chars.peek();
-		if (whitespaceExpr.test(char)) {
-			comment.push(chars.next());
-			continue;
-		}
-
-		if (char === "/" && chars.peek(2) === "/") {
-			chars.next();
-			comment.push(...$lineComment(chars, ["/"], options, true));
-		}
-
-		break;
+	while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
+	if (chars.peek() === "/" && chars.peek(2) === "/") {
+		chars.next();
+		comment.push(...$lineComment(chars, ["/"], options, true));
 	}
 
 	if (multiline) return comment.toString();
