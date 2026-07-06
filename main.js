@@ -118,7 +118,7 @@ function $code(chars, result, options, top = false) {
 
 				if (!$code(chars, result, options)) return false;
 
-				if (/(^|[\s;})])(do|for|if|while)\s*$/.test(code)) {
+				if (/(^|[\s;})])(do|for|if|while|with)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
 
 					const next = chars.peek();
@@ -315,7 +315,7 @@ function startExpression(snippet) {
 	const expressionExpr =
 		/(^|\n|[~!%^&*(\-=+{[}|:;<,>?/])[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
 	const keywordExpressionExpr =
-		/(^|\s|[~!%^&*(\-=+{[}|:;<,>?/]|\))((await|delete|instanceof|typeof|void)\s*)+$/;
+		/(^|\s|[~!%^&*(\-=+{[}|:;<,>?/]|\))((await|default|delete|instanceof|new|throw|typeof|void|yield)\s*)+$/;
 	const keywordStatementExpr = /(^|\s|[){};])(do|else|in|of|return)\s*$/;
 
 	const s = snippet.slice(0, -1);

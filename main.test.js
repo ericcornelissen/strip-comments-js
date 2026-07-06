@@ -211,20 +211,27 @@ test("pathological input", async () => {
 				"arrow function expression": "() => %s;",
 				"start of a block statement": "{%s}",
 				"after a block statement": "{}%s",
-				"if body": "if (g) %s;",
-				"else body": "if (g) { } else %s;",
-				"for body": "for (x in y) %s;",
-				"while body": "while (g) %s;",
-				"do-while body": "do %s; while (g)",
+				"expression statement": ";%s;",
+				"nth in comma operator": "1,%s;",
 				"for-in": "for (var x in %s) x",
 				"for-of": "for (var x of %s) x",
-				"expression statement": ";%s;",
-				"in-operator": "if (x in %s) f();",
-				"nth in comma operator": "1,%s;",
+				"do-while body": "do %s; while (g)",
+				"else body": "if (g) { } else %s;",
+				"for body": "for (x in y) %s;",
+				"if body": "if (g) %s;",
+				"switch-case body": "switch(x){\ncase: %s;\n}",
+				"switch-default body": "switch(x){\ncase: break;\ndefault: %s\n}",
+				"while body": "while (g) %s;",
+				"with body": "with (x) %s;",
 				"delete expression": "delete %s;",
+				"in expression": "if (x in %s) f();",
 				"instanceof expression": "x => x instanceof %s;",
+				"new expression": "() => new %s;",
+				"throw expression": "throw %s;",
 				"typeof expression": "typeof %s;",
 				"void expression": "void %s;",
+				"yield expression": "function* g(){yield %s}",
+				"default export": "export default %s;",
 				"unary plus": "var p = +%s;",
 				"unary minus": "var m = -%s;",
 				"bitwise not": "var bnot = ~%s;",
@@ -256,13 +263,7 @@ test("pathological input", async () => {
 				"ternary, second branch": "var s = g ? 1 : %s;",
 			};
 
-			const expressions = [
-				"/'/",
-				"delete /'/",
-				"typeof /'/",
-				"instanceof /'/",
-				"void /'/",
-			];
+			const expressions = ["/'/", "delete /'/"];
 
 			for (const expression of expressions) {
 				await test(expression, async () => {
@@ -281,17 +282,20 @@ test("pathological input", async () => {
 			const options = baseOptions;
 
 			const templates = {
-				"await expression": "await%s;",
-				"delete expression": "delete%s;",
-				"instanceof expression": "x => x instanceof%s;",
-				"typeof expression": "typeof%s;",
-				"void expression": "void%s;",
-				"return expression": "function f(){return%s;}",
-				"in expression": "if (x in%s) f()",
 				"for-in": "for (var x in%s) x",
 				"for-of": "for (var x of%s) x",
-				"else body": "if (a) { } else%s;",
 				"do-while body": "do%s; while (g)",
+				"else body": "if (a) { } else%s;",
+				"await expression": "await%s;",
+				"delete expression": "delete%s;",
+				"in expression": "if (x in%s) f()",
+				"instanceof expression": "x => x instanceof%s;",
+				"new expression": "new%s;",
+				"return expression": "function f(){return%s;}",
+				"throw expression": "throw%s;",
+				"typeof expression": "typeof%s;",
+				"void expression": "void%s;",
+				"yield expression": "function* g(){yield%s;}",
 			};
 
 			for (const [name, template] of Object.entries(templates)) {
