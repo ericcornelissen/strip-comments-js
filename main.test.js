@@ -23,16 +23,15 @@ const baseOptions = Object.freeze({
 });
 
 test("testdata", async (t) => {
-	const options = baseOptions;
+	for (using testcase of await testdata.files()) {
+		await t.test(testcase.name, async () => {
+			const options = {
+				...baseOptions,
+				...testcase.options,
+			};
 
-	for (const [file, filepath] of await testdata.files()) {
-		const wantpath = filepath.replace(/\.[a-z]+$/, ".want");
-		await t.test(file, async () => {
-			const inp = await fs.readFile(filepath, { encoding: "utf-8" });
-			const got = strip(inp, options);
-			const want = await fs.readFile(wantpath, { encoding: "utf-8" });
-
-			assert.equal(got, want);
+			const got = strip(testcase.original, options);
+			assert.equal(got, testcase.want);
 		});
 	}
 });
@@ -157,14 +156,14 @@ test("pattern", async (t) => {
 		},
 	};
 
-	for (const [name, testCase] of Object.entries(testdata)) {
+	for (const [name, testcase] of Object.entries(testdata)) {
 		await t.test(name, () => {
 			const options = {
 				...baseOptions,
-				pattern: testCase.pattern,
+				pattern: testcase.pattern,
 			};
 
-			assert.equal(strip(testCase.inp, options), testCase.want);
+			assert.equal(strip(testcase.inp, options), testcase.want);
 		});
 	}
 
@@ -423,9 +422,9 @@ test("pathological input", async (t) => {
 				"\\ufeff": "\ufeff",
 			};
 
-			for (const [name, testCase] of Object.entries(testdata)) {
+			for (const [name, testcase] of Object.entries(testdata)) {
 				await t.test(name, () => {
-					const out = `1 + ${testCase}/'/`;
+					const out = `1 + ${testcase}/'/`;
 					const inp = `${out} // test`;
 					assert.equal(strip(inp, options), out);
 				});

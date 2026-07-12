@@ -1,0 +1,6 @@
+{
+  "flags": ["--pattern", "Hello, world!"],
+  "options": {
+    "pattern": "Hello, world!"
+  }
+}
