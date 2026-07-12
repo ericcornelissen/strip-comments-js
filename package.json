@@ -52,14 +52,18 @@
   "devDependencies": {
     "@ericcornelissen/arbitrary-javascript": "0.2.7",
     "acorn": "8.16.0",
+    "eslint": "10.6.0",
+    "eslint-node-test": "0.2.0",
     "fast-check": "4.6.0",
+    "npm-run-all2": "9.0.2",
     "prettier": "3.8.2",
     "semver": "7.8.5",
     "strip-assertions": "1.0.2"
   },
   "scripts": {
     "_prettier": "prettier '**/*.{js,md,ts,yml}'",
-    "check": "npm run check:format",
+    "check": "npm-run-all check:*",
+    "check:js": "eslint --config .eslint.js '*.js'",
     "check:format": "npm run _prettier -- --check",
     "dogfeed": "./bin.js *.js && npm run test:unit",
     "format": "npm run _prettier -- --write",
