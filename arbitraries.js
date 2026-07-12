@@ -50,15 +50,12 @@ function commentArbitrary(type) {
 									.tuple(fc.integer({ min: 1 }), fc.integer({ min: 1 }))
 									.map(([s, e]) => `${s}-${e}`),
 							),
-							trailer: fc.oneof(
-								fc.constant(""),
-								fc
-									.string({
-										minLength: 1,
-										unit: fc.constantFrom(...charsets.alphanumeric(), " "),
-									})
-									.map((trailer) => ` ${trailer}`),
-							),
+							trailer: fc
+								.string({
+									minLength: 1,
+									unit: fc.constantFrom(...charsets.alphanumeric(), " "),
+								})
+								.map((trailer) => ` ${trailer}`),
 						})
 						.map(({ trailer, year }) => ` Copyright (C) ${year}${trailer}`),
 				})

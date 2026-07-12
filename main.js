@@ -2,6 +2,7 @@
 
 import assert from "node:assert";
 
+const licenseHeaderExpr = /\sCopyright \(C\) \d+(-\d+)?\s/;
 const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
 const sourcemapExpr = /^# sourceMappingURL=/;
 const whitespaceExpr =
@@ -48,7 +49,7 @@ export function strip(code, options) {
  * @returns {boolean}
  */
 function $blockComment(chars, result, options) {
-	const { jsdoc, block, pattern, protected: protect } = options;
+	const { block, jsdoc, licenseHeader, pattern, protected: protect } = options;
 
 	const comment = new StringBuilder();
 	comment.push(result.pop());
@@ -68,6 +69,7 @@ function $blockComment(chars, result, options) {
 			if (
 				block &&
 				(jsdoc || !content.startsWith("*")) &&
+				(licenseHeader || !licenseHeaderExpr.test(content)) &&
 				(protect || !content.startsWith("!")) &&
 				pattern.test(content)
 			) {
@@ -171,7 +173,14 @@ function $code(chars, result, options, top = false) {
  * @param {boolean} [multiline]
  */
 function $lineComment(chars, result, options, multiline = false) {
-	const { line, pattern, protected: protect, sourcemap, spdx } = options;
+	const {
+		line,
+		licenseHeader,
+		pattern,
+		protected: protect,
+		sourcemap,
+		spdx,
+	} = options;
 
 	const comment = new StringBuilder();
 	comment.push(result.pop());
@@ -196,6 +205,7 @@ function $lineComment(chars, result, options, multiline = false) {
 		.replace(/\r$/, "");
 	if (
 		line &&
+		(licenseHeader || !licenseHeaderExpr.test(content)) &&
 		(protect || !content.startsWith("!")) &&
 		(sourcemap || !sourcemapExpr.test(content)) &&
 		(spdx || !spdxExpr.test(content)) &&

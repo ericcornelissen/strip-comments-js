@@ -752,10 +752,12 @@ test("preserve license header comments", async (t) => {
 			`/* Copyright (C) 2026  Kip\n *\n * This program is free software: ...*/`,
 		],
 		"license header, line": [
-			`// Copyright (C) 2026  Henk\n//\n// This program is free software: ...`,
-			`// Copyright (C) 2026  Henk\n//\n// This program is free software: ...`,
+			`// Copyright (C) 2025-2026  Henk\n//\n// This program is free software: ...`,
+			`// Copyright (C) 2025-2026  Henk\n//\n// This program is free software: ...`,
 		],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
+		"not quite, prefix": [`// xCopyright (C) 2025-2026`, ``],
+		"not quite, suffix": [`// Copyright (C) 2025-2026x`, ``],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -811,8 +813,8 @@ test("preserve SPDX ID comments", async (t) => {
 			`// SPDX-License-Identifier: Apache-2.0 `,
 			`// SPDX-License-Identifier: Apache-2.0 `,
 		],
-		"not quite #1": [`//x SPDX-License-Identifier: fake`, ``],
-		"not quite #2": [`// SPDX-License-Identifier: fake x`, ``],
+		"not quite, prefix": [`//x SPDX-License-Identifier: fake`, ``],
+		"not quite, suffix": [`// SPDX-License-Identifier: fake x`, ``],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
