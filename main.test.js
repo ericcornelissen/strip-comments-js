@@ -51,6 +51,29 @@ test("newlines", async (t) => {
 		"CRLF before block comment": ["var x;\r\n/*foo*/", "var x;"],
 		"line comment without final newline": ["var x; // foo", "var x;"],
 		"block comment without final newline": ["var x; /* foo */", "var x;"],
+		"trim ' '": [" // comment", ""],
+		"trim '\\t'": ["\t// comment", ""],
+		"trim '\\f'": ["\f// comment", ""],
+		"trim '\\v'": ["\v// comment", ""],
+		"trim '\\u00a0'": ["\u00a0// comment", ""],
+		"trim '\\u1680'": ["\u1680// comment", ""],
+		"trim '\\u2000'": ["\u2000// comment", ""],
+		"trim '\\u2001'": ["\u2001// comment", ""],
+		"trim '\\u2002'": ["\u2002// comment", ""],
+		"trim '\\u2003'": ["\u2003// comment", ""],
+		"trim '\\u2004'": ["\u2004// comment", ""],
+		"trim '\\u2005'": ["\u2005// comment", ""],
+		"trim '\\u2000'": ["\u2006// comment", ""],
+		"trim '\\u2007'": ["\u2007// comment", ""],
+		"trim '\\u2008'": ["\u2008// comment", ""],
+		"trim '\\u2009'": ["\u2009// comment", ""],
+		"trim '\\u200a'": ["\u200a// comment", ""],
+		"trim '\\u2028'": ["\u2028// comment", ""],
+		"trim '\\u2029'": ["\u2029// comment", ""],
+		"trim '\\u202f'": ["\u202f// comment", ""],
+		"trim '\\u205f'": ["\u205f// comment", ""],
+		"trim '\\u3000'": ["\u3000// comment", ""],
+		"trim '\\ufeff'": ["\ufeff// comment", ""],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -112,10 +135,25 @@ test("pattern", async (t) => {
 			inp: "/**\n * hello\n * world\n */var x = 'Hello world!'",
 			want: "var x = 'Hello world!'",
 		},
+		"multiline block comment with leading '*', indented": {
+			pattern: /hello world/,
+			inp: "\t/**\n\t * hello\n\t * world\n\t */var x = 'Hello world!'",
+			want: "var x = 'Hello world!'",
+		},
 		"multiline line comment": {
 			pattern: /hello world/,
 			inp: "{\n  // hello\n  // world\n  var x = 'Hello world!';\n}",
 			want: "{\n  var x = 'Hello world!';\n}",
+		},
+		"multiline line comment, CRLF": {
+			pattern: /hello world/,
+			inp: "{\n  // hello\r\n  //  world\n  1/2\n}",
+			want: "{\n  1/2\n}",
+		},
+		"multiline line comment, CR mid-comment": {
+			pattern: /hello wor?ld/,
+			inp: "{\n  // hello\n  // wo\rld\n  1/2\n}",
+			want: "{\n  // hello\n  // wo\rld\n  1/2\n}",
 		},
 	};
 
@@ -172,9 +210,13 @@ test("pathological input", async (t) => {
 			"a trailing block comment": ["x;/* test */\n", "x;\n"],
 			"odd block comment 1": ["/*/**/", ""],
 			"odd block comment 2": ["/*/*/", ""],
+			"double quote string with escaped character": ['"\\t" // a', '"\\t"'],
+			"double quote string with escaped quote": ['"\\"" // b', '"\\""'],
+			"single quote string with escaped character": ["'a\\tb' // c", "'a\\tb'"],
+			"single quote string with escaped quote": ["'a\\'b' // d", "'a\\'b'"],
 			"regexp starting block w/ line comment": ["/\\/*/ // a", "/\\/*/"],
 			"regexp starting block w/ block comment": ["/\\/*/ /*b*/", "/\\/*/"],
-			"char class starting block w/ line comment": ["/[/*]/ // c", "/[/*]/"],
+			"char class starting block w/ line comment": ["/{[/*]}/ //c", "/{[/*]}/"],
 			"char class starting block w/ block comment": ["/[/*]/ /*d*/", "/[/*]/"],
 			"char class starting line w/ line comment": ["/[//]/ // e", "/[//]/"],
 			"char class starting line w/ block comment": ["/[//]/ /*f*/", "/[//]/"],
@@ -182,6 +224,11 @@ test("pathological input", async (t) => {
 			"division, line comment, parentheses": ["(3+1)/(4) // b", "(3+1)/(4)"],
 			"division, block comment": ["6 / 7 /* c */", "6 / 7"],
 			"division, block comment, parentheses": ["(6)/(8-1) /*d*/", "(6)/(8-1)"],
+			"division, nested": ["if(x){(1/2)/3} // test", "if(x){(1/2)/3}"],
+			"division, after return": ["return x; 3/14; // a", "return x; 3/14;"],
+			"division, after delete": ["delete a.b; 3/14; // a", "delete a.b; 3/14;"],
+			"control flow body block comment": ["if (x) /* inc */ x++", "if (x) x++"],
+			"control flow body line comment": ["if(x) // inc\n  x++", "if(x)\n  x++"],
 			"block followed by line comment": ["/* a */ // b", ""],
 			"line followed by block comment": ["// b\n/* a */", ""],
 		};
@@ -223,10 +270,10 @@ test("pathological input", async (t) => {
 				"if body": "if (g) %s;",
 				"switch-case body": "switch(x){\ncase: %s;\n}",
 				"switch-default body": "switch(x){\ncase: break;\ndefault: %s\n}",
-				"while body": "while (g) %s;",
+				"while body": "while  (g) %s;",
 				"with body": "with (x) %s;",
 				"delete expression": "delete %s;",
-				"in expression": "if (x in %s) f();",
+				"in expression": "if(x in %s) f();",
 				"instanceof expression": "x => x instanceof %s;",
 				"new expression": "() => new %s;",
 				"throw expression": "throw %s;",
@@ -346,6 +393,61 @@ test("pathological input", async (t) => {
 				}
 			});
 		});
+
+		await t.test("whitespace", async (t) => {
+			const options = baseOptions;
+
+			const testdata = {
+				"<space>": " ",
+				"\\t": "\t",
+				"\\f": "\f",
+				"\\v": "\v",
+				"\\u00a0": "\u00a0",
+				"\\u1680": "\u1680",
+				"\\u2000": "\u2000",
+				"\\u2001": "\u2001",
+				"\\u2002": "\u2002",
+				"\\u2003": "\u2003",
+				"\\u2004": "\u2004",
+				"\\u2005": "\u2005",
+				"\\u2006": "\u2006",
+				"\\u2007": "\u2007",
+				"\\u2008": "\u2008",
+				"\\u2009": "\u2009",
+				"\\u200a": "\u200a",
+				"\\u2028": "\u2028",
+				"\\u2029": "\u2029",
+				"\\u202f": "\u202f",
+				"\\u205f": "\u205f",
+				"\\u3000": "\u3000",
+				"\\ufeff": "\ufeff",
+			};
+
+			for (const [name, testCase] of Object.entries(testdata)) {
+				await t.test(name, () => {
+					const out = `1 + ${testCase}/'/`;
+					const inp = `${out} // test`;
+					assert.equal(strip(inp, options), out);
+				});
+			}
+		});
+	});
+
+	await t.test("template literal", async (t) => {
+		const options = baseOptions;
+
+		const testdata = {
+			"block comment in expression": ["`${/* foobar */}`", "`${}`"],
+			"line comment in expression": ["`${// foobar\n}`", "`${\n}`"],
+			"comment in almost expression": ["`\\${/* foo */}`", "`\\${/* foo */}`"],
+			"comment following a 1": ["`$ /* foo */}`", "`$ /* foo */}`"],
+		};
+
+		for (const [name, [inp, out]] of Object.entries(testdata)) {
+			await t.test(name, () => {
+				assert.equal(strip(inp, options), out);
+			});
+		}
 	});
 });
 
@@ -361,7 +463,8 @@ test("invalid source code", async (t) => {
 		"unclosed string, backticks": "/*invalid*/ var foo = `bar",
 		"unclosed template literal expression": "/*invalid*/ var foo = `${bar`",
 		"unclosed block comment": "/*invalid*/ var foo = 'bar'; /*",
-		"unclosed regular expression": "/*invalid*/ var foo = /bar",
+		"unclosed regex": "/*invalid*/ var foo = /bar",
+		"unclosed regex as control flow body": "/*invalid*/ while (foo) /bar",
 		"unmatched closing '}'": "var foo = 'bar'} /*invalid*/",
 		"unmatched closing ')'": "function foo) { var bar = 42; } /*invalid*/",
 	};
@@ -378,6 +481,24 @@ test("preserve block comments", async (t) => {
 		...baseOptions,
 		block: false,
 	};
+
+	const testdata = {
+		"block comment": [`// foobar`, ``],
+		"line comment": [`/* foobar */`, `/* foobar */`],
+		"jsdoc comment": [`/** foobar */`, `/** foobar */`],
+		"protected block comment": [`/*! foobar */`, `/*! foobar */`],
+		"protected line comment": [`//! foobar`, ``],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
+		"line comment in block comment": [`/* // a */`, `/* // a */`],
+		"line comment after block comment": [`/**///`, `/**/`],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
 
 	await t.test("any block comment", () => {
 		fc.assert(
@@ -396,19 +517,6 @@ test("preserve block comments", async (t) => {
 			}),
 		);
 	});
-
-	await t.test("pathological input", async (t) => {
-		const testdata = {
-			"line comment in block comment": [`/* // a */`, `/* // a */`],
-			"line comment after block comment": [`/**///`, `/**/`],
-		};
-
-		for (const [name, [inp, out]] of Object.entries(testdata)) {
-			await t.test(name, () => {
-				assert.equal(strip(inp, options), out);
-			});
-		}
-	});
 });
 
 test("preserve JSDoc comments", async (t) => {
@@ -416,6 +524,25 @@ test("preserve JSDoc comments", async (t) => {
 		...baseOptions,
 		jsdoc: false,
 	};
+
+	const testdata = {
+		"block comment": [`// foobar`, ``],
+		"line comment": [`/* foobar */`, ``],
+		"jsdoc comment, single line": [`/** foobar */`, `/** foobar */`],
+		"jsdoc comment, multiline": [`/**\n * foobar\n */`, `/**\n * foobar\n */`],
+		"protected block comment": [`/*! foobar */`, ``],
+		"protected line comment": [`//! foobar`, ``],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
+		"line comment in JSDoc comment": [`/** // a */`, `/** // a */`],
+		"line comment after JSDoc comment": [`/***///`, `/***/`],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
 
 	await t.test("any JSDoc comment", () => {
 		fc.assert(
@@ -443,19 +570,6 @@ test("preserve JSDoc comments", async (t) => {
 			}),
 		);
 	});
-
-	await t.test("pathological input", async (t) => {
-		const testdata = {
-			"line comment in JSDoc comment": [`/** // a */`, `/** // a */`],
-			"line comment after JSDoc comment": [`/***///`, `/***/`],
-		};
-
-		for (const [name, [inp, out]] of Object.entries(testdata)) {
-			await t.test(name, () => {
-				assert.equal(strip(inp, options), out);
-			});
-		}
-	});
 });
 
 test("preserve line comments", async (t) => {
@@ -463,6 +577,30 @@ test("preserve line comments", async (t) => {
 		...baseOptions,
 		line: false,
 	};
+
+	const testdata = {
+		"block comment": [`// foobar`, `// foobar`],
+		"line comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"protected block comment": [`/*! foobar */`, ``],
+		"protected line comment": [`//! foobar`, `//! foobar`],
+		"sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map`,
+			`//# sourceMappingURL=foobar.js.map`,
+		],
+		"spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"line comment in line comment": [`//// a`, `//// a`],
+		"block comment in line comment": [`// /* b */`, `// /* b */`],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
 
 	await t.test("any line comment", () => {
 		fc.assert(
@@ -481,19 +619,6 @@ test("preserve line comments", async (t) => {
 			}),
 		);
 	});
-
-	await t.test("pathological input", async (t) => {
-		const testdata = {
-			"line comment in line comment": [`//// a`, `//// a`],
-			"block comment in line comment": [`// /* b */`, `// /* b */`],
-		};
-
-		for (const [name, [inp, out]] of Object.entries(testdata)) {
-			await t.test(name, () => {
-				assert.equal(strip(inp, options), out);
-			});
-		}
-	});
 });
 
 test("preserve protected comments", async (t) => {
@@ -501,6 +626,24 @@ test("preserve protected comments", async (t) => {
 		...baseOptions,
 		protected: false,
 	};
+
+	const testdata = {
+		"block comment": [`// foobar`, ``],
+		"line comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"protected block comment": [`/*! foobar */`, `/*! foobar */`],
+		"protected line comment": [`//! foobar`, `//! foobar`],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
+		"line comment in protected comment": [`/*! // a */`, `/*! // a */`],
+		"line comment after protected comment": [`/*!*///`, `/*!*/`],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
 
 	await t.test("any protected comment", () => {
 		fc.assert(
@@ -525,19 +668,6 @@ test("preserve protected comments", async (t) => {
 			}),
 		);
 	});
-
-	await t.test("pathological input", async (t) => {
-		const testdata = {
-			"line comment in protected comment": [`/*! // a */`, `/*! // a */`],
-			"line comment after protected comment": [`/*!*///`, `/*!*/`],
-		};
-
-		for (const [name, [inp, out]] of Object.entries(testdata)) {
-			await t.test(name, () => {
-				assert.equal(strip(inp, options), out);
-			});
-		}
-	});
 });
 
 test("preserve sourcemap comments", async (t) => {
@@ -545,6 +675,26 @@ test("preserve sourcemap comments", async (t) => {
 		...baseOptions,
 		sourcemap: false,
 	};
+
+	const testdata = {
+		"block comment": [`// foobar`, ``],
+		"line comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"protected block comment": [`/*! foobar */`, ``],
+		"protected line comment": [`//! foobar`, ``],
+		"sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map`,
+			`//# sourceMappingURL=foobar.js.map`,
+		],
+		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
+		"not quite a sourcemap comment": [`// # sourceMappingURL=fake.js.map`, ``],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
 
 	await t.test("any sourcemap comment", () => {
 		fc.assert(
@@ -576,6 +726,31 @@ test("preserve SPDX ID comments", async (t) => {
 		...baseOptions,
 		spdx: false,
 	};
+
+	const testdata = {
+		"block comment": [`// foobar`, ``],
+		"line comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"protected block comment": [`/*! foobar */`, ``],
+		"protected line comment": [`//! foobar`, ``],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier with trailing whitespace": [
+			`// SPDX-License-Identifier: Apache-2.0 `,
+			`// SPDX-License-Identifier: Apache-2.0 `,
+		],
+		"not quite #1": [`//x SPDX-License-Identifier: fake`, ``],
+		"not quite #2": [`// SPDX-License-Identifier: fake x`, ``],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
 
 	await t.test("any SPDX short-form identifier", () => {
 		fc.assert(

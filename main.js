@@ -315,7 +315,7 @@ function startExpression(snippet) {
 	const expressionExpr =
 		/(^|\n|[~!%^&*(\-=+{[}|:;<,>?/])[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
 	const keywordExpressionExpr =
-		/(^|\s|[~!%^&*(\-=+{[}|:;<,>?/]|\))((await|default|delete|instanceof|new|throw|typeof|void|yield)\s*)+$/;
+		/(^|\s|[~!%^&*(\-=+{[}|:;<,>?/]|\))(await|default|delete|instanceof|new|throw|typeof|void|yield)\s*$/;
 	const keywordStatementExpr = /(^|\s|[){};])(do|else|in|of|return)\s*$/;
 
 	const s = snippet.slice(0, -1);
@@ -488,13 +488,6 @@ class StringBuilder {
 	pop() {
 		assert(this.#list.length > 0);
 		return this.#list.pop();
-	}
-
-	/**
-	 * Reset the string builder to an empty string.
-	 */
-	reset() {
-		this.#list.length = 0;
 	}
 
 	/**
