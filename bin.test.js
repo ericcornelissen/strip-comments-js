@@ -16,3 +16,15 @@ test("regular usage", async (t) => {
 		});
 	}
 });
+
+test("auxiliary flags", async (t) => {
+	await t.test("--help", () => {
+		const { status } = spawnSync("./bin.js", ["--help"]);
+		assert.equal(status, 0);
+	});
+
+	await t.test("--version", () => {
+		const { status } = spawnSync("./bin.js", ["--version"]);
+		assert.equal(status, 0);
+	});
+});
