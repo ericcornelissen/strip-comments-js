@@ -6,6 +6,7 @@ export default {
 	inPlace: false,
 
 	mutate: ["main.js"],
+	plugins: ["@stryker-mutator/*", "./script/stryker-ignore-assert.js"],
 
 	testRunner: "tap",
 	tap: {
@@ -13,6 +14,8 @@ export default {
 		testFiles: ["main.test.js"],
 		nodeArgs: ["--import", "./.stryker.js"],
 	},
+
+	ignorers: ["assert"],
 
 	incremental: true,
 	incrementalFile: "node_modules/.cache/stryker-incremental.json",
