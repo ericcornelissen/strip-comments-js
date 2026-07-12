@@ -9,13 +9,14 @@ const whitespaceExpr =
 
 /**
  * @typedef Options
- * @property {RegExp} pattern The pattern of comments to strip.
- * @property {boolean} block Whether to strip block comments.
- * @property {boolean} line Whether to strip line comments.
- * @property {boolean} jsdoc Whether to strip JSDoc comments.
- * @property {boolean} protected Whether to strip protected comments.
- * @property {boolean} sourcemap Whether to strip sourcemap comments.
- * @property {boolean} spdx Whether to strip SPDX short-form identifiers.
+ * @property {RegExp} pattern
+ * @property {boolean} block
+ * @property {boolean} licenseHeader
+ * @property {boolean} line
+ * @property {boolean} jsdoc
+ * @property {boolean} protected
+ * @property {boolean} sourcemap
+ * @property {boolean} spdx
  */
 
 /**

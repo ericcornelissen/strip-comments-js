@@ -36,6 +36,9 @@ const protect = idx === -1 ? undefined : !files.splice(idx, 1);
 idx = files.indexOf("--keep-sourcemap");
 const sourcemap = idx === -1 ? undefined : !files.splice(idx, 1);
 
+idx = files.indexOf("--strip-license-header");
+const licenseHeader = idx === -1 ? undefined : !!files.splice(idx, 1);
+
 idx = files.indexOf("--strip-spdx");
 const spdx = idx === -1 ? undefined : !!files.splice(idx, 1);
 
@@ -49,6 +52,7 @@ const options = {
 	block,
 	help,
 	jsdoc,
+	licenseHeader,
 	line,
 	pattern,
 	protected: protect,
@@ -65,15 +69,16 @@ Summary:
   Strip comments from JavaScript and TypeScript code.
 
 Flags:
-  --help                Output this help message.
-  --keep-block          Don't strip block comments.
-  --keep-jsdoc          Don't strip JSDoc comments.
-  --keep-line           Don't strip line comments.
-  --keep-protected      Don't strip protected comments.
-  --keep-sourcemap      Don't strip sourcemap comments.
-  --pattern <pattern>   A regular expression of comments to strip.
-  --strip-spdx          Do strip SPDX short-form identifiers.
-  --version             Output version information.
+  --help                   Output this help message.
+  --keep-block             Don't strip block comments.
+  --keep-jsdoc             Don't strip JSDoc comments.
+  --keep-line              Don't strip line comments.
+  --keep-protected         Don't strip protected comments.
+  --keep-sourcemap         Don't strip sourcemap comments.
+  --pattern <pattern>      A regular expression of comments to strip.
+  --strip-license-header   Do strip license headers.
+  --strip-spdx             Do strip SPDX short-form identifiers.
+  --version                Output version information.
 
 Need more help? Found a bug? Missing something? See:
 https://gitlab.com/ericcornelissen/strip-comments-js`);

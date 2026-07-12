@@ -39,8 +39,34 @@ function commentArbitrary(type) {
 				.block()
 				.map((s) => s.replace(/^(\s*)\/\*/, "$1/**"))
 				.filter((s) => !/^(\s*)\/\*\*\//.test(s));
+		case "license header":
+			return javascript
+				.comment({
+					content: fc
+						.record({
+							year: fc.oneof(
+								fc.integer({ min: 1 }),
+								fc
+									.tuple(fc.integer({ min: 1 }), fc.integer({ min: 1 }))
+									.map(([s, e]) => `${s}-${e}`),
+							),
+							trailer: fc.oneof(
+								fc.constant(""),
+								fc
+									.string({
+										minLength: 1,
+										unit: fc.constantFrom(...charsets.alphanumeric(), " "),
+									})
+									.map((trailer) => ` ${trailer}`),
+							),
+						})
+						.map(({ trailer, year }) => ` Copyright (C) ${year}${trailer}`),
+				})
+				.map((s) => s.replace(/^(\s*)(\/[/*])/, "$1$2!"));
 		case "line":
 			return javascript.comment.line();
+		case "non-license header":
+			return javascript.comment().filter((s) => !/Copyright \(C\) \d/.test(s));
 		case "non-jsdoc":
 			return javascript.comment.block().filter((s) => !/^\s*\/\*\*/.test(s));
 		case "non-protected":
