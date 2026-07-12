@@ -63,6 +63,7 @@
   "scripts": {
     "_prettier": "prettier '**/*.{js,md,ts,yml}'",
     "check": "npm-run-all check:*",
+    "check:config": "node script/check-eslint-rules.js",
     "check:js": "eslint --config .eslint.js '*.js'",
     "check:format": "npm run _prettier -- --check",
     "dogfeed": "./bin.js *.js && npm run test:unit",
