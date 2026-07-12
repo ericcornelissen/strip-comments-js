@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import * as assert from "node:assert";
+import * as assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import * as testdata from "./testdata.js";
 
-test("regular usage", async () => {
+test("regular usage", async (t) => {
 	for (const [file, filepath] of await testdata.files()) {
-		await test(file, async () => {
+		await t.test(file, async () => {
 			const before = await fs.readFile(filepath);
 
 			spawnSync("./bin.js", [filepath]);
@@ -23,9 +23,9 @@ test("regular usage", async () => {
 	}
 });
 
-test("--pattern", async () => {
+test("--pattern", async (t) => {
 	for (const [file, filepath] of await testdata.files()) {
-		await test(file, async () => {
+		await t.test(file, async () => {
 			const before = await fs.readFile(filepath);
 
 			spawnSync("./bin.js", ["--pattern", "won't match", filepath]);
