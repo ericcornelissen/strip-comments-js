@@ -8,32 +8,11 @@ import { test } from "node:test";
 import * as testdata from "./testdata.js";
 
 test("regular usage", async (t) => {
-	for (const [file, filepath] of await testdata.files()) {
-		await t.test(file, async () => {
-			const before = await fs.readFile(filepath);
-
-			spawnSync("./bin.js", [filepath]);
-
-			const got = await fs.readFile(filepath);
-			const want = await fs.readFile(filepath.replace(/\.[a-z]+$/, ".want"));
-			fs.writeFile(filepath, before);
-
-			assert.deepEqual(got.toString(), want.toString());
-		});
-	}
-});
-
-test("--pattern", async (t) => {
-	for (const [file, filepath] of await testdata.files()) {
-		await t.test(file, async () => {
-			const before = await fs.readFile(filepath);
-
-			spawnSync("./bin.js", ["--pattern", "won't match", filepath]);
-
-			const got = await fs.readFile(filepath);
-			fs.writeFile(filepath, before);
-
-			assert.deepEqual(got.toString(), before.toString());
+	for (using testcase of await testdata.files()) {
+		await t.test(testcase.name, async () => {
+			spawnSync("./bin.js", [testcase.filepath, ...testcase.flags]);
+			const got = await fs.readFile(testcase.filepath, { encoding: "utf-8" });
+			assert.deepEqual(got, testcase.want);
 		});
 	}
 });
