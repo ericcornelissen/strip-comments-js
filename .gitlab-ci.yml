@@ -23,6 +23,7 @@ verify:
   script:
     - npm clean-install
     - npm run verify
+    - npm run mutation
     - npm run dogfeed
 node24:
   stage: test
