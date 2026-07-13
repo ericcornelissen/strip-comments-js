@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as assert from "node:assert/strict";
-import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import * as acorn from "acorn";

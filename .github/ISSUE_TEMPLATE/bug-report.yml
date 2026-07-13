@@ -1,0 +1,86 @@
+name: Bug Report
+description: File a bug report.
+labels:
+  - bug
+body:
+  - id: pre-check
+    type: checkboxes
+    attributes:
+      label: Pre-check
+      description: |
+        Before you submit your report, make sure the bug has not already been
+        reported. Also check for closed bug reports, e.g. in case it has been
+        fixed in a new version.
+      options:
+        - label: I have searched the existing issues
+          required: true
+  - id: related
+    type: textarea
+    attributes:
+      label: Related
+      description: |
+        List any related items, describe the relation.
+    validations:
+      required: false
+  - id: version
+    type: textarea
+    attributes:
+      label: Version information
+      description: |
+        Run `strip-comments-js --version` and paste the result below.
+      value: |
+        ```text
+        $ strip-comments-js --version
+
+        ```
+    validations:
+      required: true
+  - id: summary
+    type: textarea
+    attributes:
+      label: Summary
+      description: |
+        Provide a short description of the bug. What goes wrong and when?
+    validations:
+      required: true
+  - id: expected
+    type: textarea
+    attributes:
+      label: Expected behavior
+      description: |
+        Describe what you expected to happen.
+    validations:
+      required: true
+  - id: reproducer
+    type: textarea
+    attributes:
+      label: Reproducing example
+      description: |
+        Provide a (minimal) scenario that triggers the bug. For example:
+
+        Run `strip-comments-js` on commit `299cf41` of the repository
+        <https://github.com/ericcornelissen/strip-comments-js>
+    validations:
+      required: false
+  - id: observation
+    type: textarea
+    attributes:
+      label: Observation
+      description: |
+        Run the program with the `NODE_DEBUG=strip-comments-js` environment
+        variable and paste the full output below.
+      placeholder: |
+        ```text
+        $ NODE_DEBUG=strip-comments-js npx strip-comments-js file-1.js file-2.js
+
+        ```
+    validations:
+      required: false
+  - id: open-ended
+    type: textarea
+    attributes:
+      label: Further details
+      description: |
+        Share any additional information you think is relevant.
+    validations:
+      required: false

@@ -18,7 +18,7 @@ export default {
 	ignorers: ["assert"],
 
 	incremental: true,
-	incrementalFile: "node_modules/.cache/stryker-incremental.json",
+	incrementalFile: ".cache/mutation.json",
 
 	reporters: ["clear-text", "html", "progress"],
 	htmlReporter: {

@@ -1,5 +1,6 @@
 # Ignore file for git (https://git-scm.com/docs/gitignore)
 
+.cache/
 node_modules/
 mutation.html
 npm-debug.log*

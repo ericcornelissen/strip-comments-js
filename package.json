@@ -19,10 +19,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/ericcornelissen/strip-comments-js.git"
+    "url": "git+https://github.com/ericcornelissen/strip-comments-js.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/ericcornelissen/strip-comments-js/-/work_items"
+    "url": "https://github.com/ericcornelissen/strip-comments-js/issues"
   },
   "author": {
     "name": "Eric Cornelissen",
@@ -66,9 +66,9 @@
     "_prettier": "prettier '**/*.{js,md,ts,yml}'",
     "check": "npm-run-all check:*",
     "check:config": "node script/check-eslint-rules.js",
-    "check:js": "eslint --config .eslint.js '*.js'",
     "check:format": "npm run _prettier -- --check",
-    "dogfeed": "./bin.js *.js && npm run test:unit",
+    "check:js": "eslint --config .eslint.js '*.js'",
+    "dogfeed": "./bin.js *.js && npm run test",
     "format": "npm run _prettier -- --write",
     "man": "man ./man.1",
     "package": "strip-assertions ./*.js && ./bin.js --keep-jsdoc lib.d.ts lib.js && ./bin.js bin.js main.js",

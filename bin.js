@@ -76,7 +76,7 @@ Flags:
   --version             Output version information.
 
 Need more help? Found a bug? Missing something? See:
-https://gitlab.com/ericcornelissen/strip-comments-js`);
+https://github.com/ericcornelissen/strip-comments-js`);
 	exit(0);
 }
 
