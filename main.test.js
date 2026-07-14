@@ -164,7 +164,12 @@ test("pattern", async (t) => {
 			inp: "/* goodbye\n   cruel\n   world\n*/var x = 'Hello world!'",
 			want: "var x = 'Hello world!'",
 		},
-		"multiline block comment ": {
+		"multiline block comment with leading newlines": {
+			pattern: /^foo$/,
+			inp: "/*\n\n\nfoo */var bar = 'baz';",
+			want: "var bar = 'baz';",
+		},
+		"multiline block comment with trailing newlines": {
 			pattern: /^foo$/,
 			inp: "/* foo\n\n\n*/var bar = 'baz';",
 			want: "var bar = 'baz';",
@@ -494,8 +499,12 @@ test("invalid source code", async (t) => {
 		"unclosed block comment": "/*invalid*/ var foo = 'bar'; /*",
 		"unclosed regex": "/*invalid*/ var foo = /bar",
 		"unclosed regex as control flow body": "/*invalid*/ while (foo) /bar",
-		"unmatched closing '}'": "var foo = 'bar'} /*invalid*/",
-		"unmatched closing ')'": "function foo) { var bar = 42; } /*invalid*/",
+		"unmatched '{'": "{var foo = 'bar' /*invalid*/",
+		"unmatched '}'": "var foo = 'bar'} /*invalid*/",
+		"unmatched '('": "function foo( { var bar = 42; } /*invalid*/",
+		"unmatched ')'": "function foo) { var bar = 42; } /*invalid*/",
+		"unbalanced brackets, '{'-')'": "{ let foo = 42 ) /*invalid*/",
+		"unbalanced brackets, '('-'}'": "( let bar = 42 } /*invalid*/",
 	};
 
 	for (const [name, inp] of Object.entries(testdata)) {
