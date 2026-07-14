@@ -38,7 +38,7 @@ function commentArbitrary(type) {
 			return javascript.comment
 				.block()
 				.map((s) => s.replace(/^(\s*)\/\*/, "$1/**"))
-				.filter((s) => !/^(\s*)\/\*\*\//.test(s));
+				.filter((s) => !/\/\*\*\//.test(s));
 		case "license header":
 			return javascript
 				.comment({
@@ -59,7 +59,7 @@ function commentArbitrary(type) {
 						})
 						.map(({ trailer, year }) => ` Copyright (C) ${year}${trailer}`),
 				})
-				.map((s) => s.replace(/^(\s*)(\/[/*])/, "$1$2!"));
+				.map((s) => s.replace(/^(\s*)(\/[*/])/, "$1$2!"));
 		case "line":
 			return javascript.comment.line();
 		case "non-license header":
@@ -67,7 +67,7 @@ function commentArbitrary(type) {
 		case "non-jsdoc":
 			return javascript.comment.block().filter((s) => !/^\s*\/\*\*/.test(s));
 		case "non-protected":
-			return javascript.comment().filter((s) => !/^\s*\/[/*]!/.test(s));
+			return javascript.comment().filter((s) => !/^\s*\/[*/]!/.test(s));
 		case "non-sourcemap":
 			return javascript
 				.comment()
@@ -79,7 +79,7 @@ function commentArbitrary(type) {
 		case "protected":
 			return javascript
 				.comment()
-				.map((s) => s.replace(/^(\s*)(\/[/*])/, "$1$2!"));
+				.map((s) => s.replace(/^(\s*)(\/[*/])/, "$1$2!"));
 		case "sourcemap":
 			return javascript.comment
 				.line({

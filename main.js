@@ -2,11 +2,11 @@
 
 import assert from "node:assert";
 
-const licenseHeaderExpr = /\sCopyright \(C\) \d+(-\d+)?\s/;
-const spdxExpr = /^ SPDX-License-Identifier: [A-Za-z0-9-.]+\s*$/;
+const licenseHeaderExpr = /(?:^|\s)Copyright \(C\) \d+(?:-\d+)?(?:\s|$)/;
+const spdxExpr = /^ SPDX-License-Identifier: [\-.0-9A-Za-z]+\s*$/;
 const sourcemapExpr = /^# sourceMappingURL=/;
 const whitespaceExpr =
-	/[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/;
+	/[\t\v\f \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/;
 
 /**
  * @typedef Options
@@ -64,7 +64,8 @@ function $blockComment(chars, result, options) {
 
 			const content = comment
 				.slice(2, comment.length - 2)
-				.replaceAll(/[ \t]*\n[ \t]*\*/g, "");
+				.replaceAll(/(?<=[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
+				.replaceAll(/^[\t ]*(?![\t !*])|(?<![\t ])[\t ]*$/g, "");
 
 			if (
 				block &&
@@ -121,7 +122,7 @@ function $code(chars, result, options, top = false) {
 
 				if (!$code(chars, result, options)) return false;
 
-				if (/(^|[\s;})])(do|for|if|while|with)\s*$/.test(code)) {
+				if (/(?:^|[\s);}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
 
 					const next = chars.peek();
@@ -324,10 +325,10 @@ function $template(chars, result, options) {
  */
 function startExpression(snippet) {
 	const expressionExpr =
-		/(^|\n|[~!%^&*(\-=+{[}|:;<,>?/])[\t\f\v \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
+		/(?:^|[\n!%&(*+,\-/:;<=>?[^{|}~])[\t\v\f \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
 	const keywordExpressionExpr =
-		/(^|\s|[~!%^&*(\-=+{[}|:;<,>?/]|\))(await|default|delete|instanceof|new|throw|typeof|void|yield)\s*$/;
-	const keywordStatementExpr = /(^|\s|[){};])(do|else|in|of|return)\s*$/;
+		/(?:^|[\s!%&()*+,\-/:;<=>?[^{|}~])(?:await|default|delete|instanceof|new|throw|typeof|void|yield)\s*$/;
+	const keywordStatementExpr = /(?:^|[\s);{}])(?:do|else|in|of|return)\s*$/;
 
 	const s = snippet.slice(0, -1);
 	return (
