@@ -164,6 +164,11 @@ test("pattern", async (t) => {
 			inp: "/* goodbye\n   cruel\n   world\n*/var x = 'Hello world!'",
 			want: "var x = 'Hello world!'",
 		},
+		"multiline block comment ": {
+			pattern: /^foo$/,
+			inp: "/* foo\n\n\n*/var bar = 'baz';",
+			want: "var bar = 'baz';",
+		},
 		"multiline line comment": {
 			pattern: /hello world/,
 			inp: "{\n  // hello\n  // world\n  var x = 'Hello world!';\n}",

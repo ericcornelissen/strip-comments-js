@@ -2,7 +2,7 @@
 
 import assert from "node:assert";
 
-const licenseHeaderExpr = /(?:^|\s)Copyright \(C\) \d+(?:-\d+)?(?:\s|$)/;
+const licenseHeaderExpr = /(?:^|\s)Copyright \(C\) \d+(?:-\d+)?\s/;
 const spdxExpr = /^ SPDX-License-Identifier: [\-.0-9A-Za-z]+\s*$/;
 const sourcemapExpr = /^# sourceMappingURL=/;
 const whitespaceExpr =
