@@ -52,6 +52,8 @@ stripComments("var unicorns = false; // Only horses", { line: false });
 
 - `pattern`: The pattern of comments to strip. By default all comments are
   stripped.
+- `licenseHeader`: Whether to strip license headers (comments containing
+  `Copyright (C) YYYY`). By default license headers are NOT stripped.
 - `line`: Whether to strip line comments. By default line comments are stripped.
 - `block`: Whether to strip block comments. By default block comments are
   stripped.

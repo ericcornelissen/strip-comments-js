@@ -15,6 +15,7 @@ const baseOptions = Object.freeze({
 	pattern: /[^]?/,
 	block: true,
 	jsdoc: true,
+	licenseHeader: true,
 	line: true,
 	protected: true,
 	sourcemap: true,
@@ -487,6 +488,11 @@ test("preserve block comments", async (t) => {
 		"protected block comment": [`/*! foobar */`, `/*! foobar */`],
 		"protected line comment": [`//! foobar`, ``],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"license header, block": [
+			`/* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
 		"line comment in block comment": [`/* // a */`, `/* // a */`],
 		"line comment after block comment": [`/**///`, `/**/`],
@@ -517,6 +523,60 @@ test("preserve block comments", async (t) => {
 	});
 });
 
+test("preserve line comments", async (t) => {
+	const options = {
+		...baseOptions,
+		line: false,
+	};
+
+	const testdata = {
+		"block comment": [`// foobar`, `// foobar`],
+		"line comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"protected block comment": [`/*! foobar */`, ``],
+		"protected line comment": [`//! foobar`, `//! foobar`],
+		"sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map`,
+			`//# sourceMappingURL=foobar.js.map`,
+		],
+		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, line": [
+			`// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"line comment in line comment": [`//// a`, `//// a`],
+		"block comment in line comment": [`// /* b */`, `// /* b */`],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
+
+	await t.test("any line comment", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
+		);
+	});
+
+	await t.test("any block comment", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
+		);
+	});
+});
+
 test("preserve JSDoc comments", async (t) => {
 	const options = {
 		...baseOptions,
@@ -531,6 +591,7 @@ test("preserve JSDoc comments", async (t) => {
 		"protected block comment": [`/*! foobar */`, ``],
 		"protected line comment": [`//! foobar`, ``],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"license header": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
 		"line comment in JSDoc comment": [`/** // a */`, `/** // a */`],
 		"line comment after JSDoc comment": [`/***///`, `/***/`],
@@ -570,55 +631,6 @@ test("preserve JSDoc comments", async (t) => {
 	});
 });
 
-test("preserve line comments", async (t) => {
-	const options = {
-		...baseOptions,
-		line: false,
-	};
-
-	const testdata = {
-		"block comment": [`// foobar`, `// foobar`],
-		"line comment": [`/* foobar */`, ``],
-		"jsdoc comment": [`/** foobar */`, ``],
-		"protected block comment": [`/*! foobar */`, ``],
-		"protected line comment": [`//! foobar`, `//! foobar`],
-		"sourcemap comment": [
-			`//# sourceMappingURL=foobar.js.map`,
-			`//# sourceMappingURL=foobar.js.map`,
-		],
-		"spdx identifier": [
-			`// SPDX-License-Identifier: Apache-2.0`,
-			`// SPDX-License-Identifier: Apache-2.0`,
-		],
-		"line comment in line comment": [`//// a`, `//// a`],
-		"block comment in line comment": [`// /* b */`, `// /* b */`],
-	};
-
-	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
-			assert.equal(strip(inp, options), out);
-		});
-	}
-
-	await t.test("any line comment", () => {
-		fc.assert(
-			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
-				const stripped = strip(code, options);
-				assert.ok(stripped.includes(comment.trim()));
-			}),
-		);
-	});
-
-	await t.test("any block comment", () => {
-		fc.assert(
-			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
-				const stripped = strip(code, options);
-				assert.ok(!stripped.includes(comment));
-			}),
-		);
-	});
-});
-
 test("preserve protected comments", async (t) => {
 	const options = {
 		...baseOptions,
@@ -632,6 +644,7 @@ test("preserve protected comments", async (t) => {
 		"protected block comment": [`/*! foobar */`, `/*! foobar */`],
 		"protected line comment": [`//! foobar`, `//! foobar`],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"license header": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
 		"line comment in protected comment": [`/*! // a */`, `/*! // a */`],
 		"line comment after protected comment": [`/*!*///`, `/*!*/`],
@@ -684,6 +697,7 @@ test("preserve sourcemap comments", async (t) => {
 			`//# sourceMappingURL=foobar.js.map`,
 			`//# sourceMappingURL=foobar.js.map`,
 		],
+		"license header": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
 		"not quite a sourcemap comment": [`// # sourceMappingURL=fake.js.map`, ``],
 	};
@@ -719,6 +733,63 @@ test("preserve sourcemap comments", async (t) => {
 	});
 });
 
+test("preserve license header comments", async (t) => {
+	const options = {
+		...baseOptions,
+		licenseHeader: false,
+	};
+
+	const testdata = {
+		"block comment": [`// foobar`, ``],
+		"line comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"protected block comment": [`/*! foobar */`, ``],
+		"protected line comment": [`//! foobar`, ``],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"license header, block": [
+			`/* Copyright (C) 2026  Kip\n *\n * This program is free software: ...*/`,
+			`/* Copyright (C) 2026  Kip\n *\n * This program is free software: ...*/`,
+		],
+		"license header, line": [
+			`// Copyright (C) 2025-2026  Henk\n//\n// This program is free software: ...`,
+			`// Copyright (C) 2025-2026  Henk\n//\n// This program is free software: ...`,
+		],
+		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
+		"not quite, prefix": [`// xCopyright (C) 2025-2026`, ``],
+		"not quite, suffix": [`// Copyright (C) 2025-2026x`, ``],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
+
+	await t.test("any license header", () => {
+		fc.assert(
+			fc.property(
+				arb.codeWithComment("license header"),
+				({ code, comment }) => {
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
+				},
+			),
+		);
+	});
+
+	await t.test("any non-license header comment", () => {
+		fc.assert(
+			fc.property(
+				arb.codeWithComment("non-license header"),
+				({ code, comment }) => {
+					const stripped = strip(code, options);
+					assert.ok(!stripped.includes(comment));
+				},
+			),
+		);
+	});
+});
+
 test("preserve SPDX ID comments", async (t) => {
 	const options = {
 		...baseOptions,
@@ -732,6 +803,7 @@ test("preserve SPDX ID comments", async (t) => {
 		"protected block comment": [`/*! foobar */`, ``],
 		"protected line comment": [`//! foobar`, ``],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"license header": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [
 			`// SPDX-License-Identifier: Apache-2.0`,
 			`// SPDX-License-Identifier: Apache-2.0`,
@@ -740,8 +812,8 @@ test("preserve SPDX ID comments", async (t) => {
 			`// SPDX-License-Identifier: Apache-2.0 `,
 			`// SPDX-License-Identifier: Apache-2.0 `,
 		],
-		"not quite #1": [`//x SPDX-License-Identifier: fake`, ``],
-		"not quite #2": [`// SPDX-License-Identifier: fake x`, ``],
+		"not quite, prefix": [`//x SPDX-License-Identifier: fake`, ``],
+		"not quite, suffix": [`// SPDX-License-Identifier: fake x`, ``],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {

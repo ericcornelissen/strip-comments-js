@@ -1,0 +1,6 @@
+{
+  "flags": ["--strip-license-header"],
+  "options": {
+    "licenseHeader": true
+  }
+}

@@ -7,6 +7,9 @@ export type Options = {
 	/** Whether to strip block comments. */
 	block?: boolean;
 
+	/** Whether to strip license headers. */
+	licenseHeader?: boolean;
+
 	/** Whether to strip line comments. */
 	line?: boolean;
 

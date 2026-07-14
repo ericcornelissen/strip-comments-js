@@ -72,7 +72,7 @@
     "format": "npm run _prettier -- --write",
     "man": "man ./man.1",
     "package": "strip-assertions ./*.js && ./bin.js --keep-jsdoc lib.d.ts lib.js && ./bin.js bin.js main.js",
-    "test": "npm run test:unit && npm run test:bin",
+    "test": "npm-run-all test:*",
     "test:bin": "node --test 'bin.test.js'",
     "test:unit": "node --test 'main.test.js'",
     "mutation": "stryker run .stryker.js",
