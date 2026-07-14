@@ -129,14 +129,39 @@ test("pattern", async (t) => {
 			inp: "var x = y; // foobar\r\n",
 			want: "var x = y;\r\n",
 		},
+		"multiline block comment without leading '*'": {
+			pattern: /hello world/,
+			inp: "/*\nhello\nworld\n*/var x = 'Hello world!'",
+			want: "var x = 'Hello world!'",
+		},
+		"multiline block comment without leading '*', indented": {
+			pattern: /hello world/,
+			inp: "\t/*\t\nhello\t\nworld\t\n*/var x = 'Hello world!'",
+			want: "var x = 'Hello world!'",
+		},
 		"multiline block comment with leading '*'": {
 			pattern: /hello world/,
-			inp: "/**\n * hello\n * world\n */var x = 'Hello world!'",
+			inp: "/*\n * hello\n * world\n */var x = 'Hello world!'",
 			want: "var x = 'Hello world!'",
 		},
 		"multiline block comment with leading '*', indented": {
 			pattern: /hello world/,
+			inp: "\t/*\n\t * hello\n\t * world\n\t */var x = 'Hello world!'",
+			want: "var x = 'Hello world!'",
+		},
+		"multiline JSDoc comment": {
+			pattern: /hello world/,
+			inp: "/**\n * hello\n * world\n */var x = 'Hello world!'",
+			want: "var x = 'Hello world!'",
+		},
+		"multiline JSDoc comment, indented": {
+			pattern: /hello world/,
 			inp: "\t/**\n\t * hello\n\t * world\n\t */var x = 'Hello world!'",
+			want: "var x = 'Hello world!'",
+		},
+		"multiline block comment starting on line 1": {
+			pattern: /^goodbye cruel world$/,
+			inp: "/* goodbye\n   cruel\n   world\n*/var x = 'Hello world!'",
 			want: "var x = 'Hello world!'",
 		},
 		"multiline line comment": {
@@ -661,7 +686,7 @@ test("preserve protected comments", async (t) => {
 			fc.property(
 				arb.codeWithComment("protected"),
 				({ code, comment, pre, post }) => {
-					fc.pre(!/\/\/[^\n]*\n\s*$/.test(pre));
+					fc.pre(!/(?:^|[^/])\/\/[^\n]*\n\s*$/.test(pre));
 					fc.pre(!/^\s*\/\/[^\n]*\n/.test(post));
 
 					const stripped = strip(code, options);
@@ -713,7 +738,7 @@ test("preserve sourcemap comments", async (t) => {
 			fc.property(
 				arb.codeWithComment("sourcemap"),
 				({ code, comment, pre, post }) => {
-					fc.pre(!/\/\/[^\n]*\n\s*$/.test(pre));
+					fc.pre(!/(?:^|[^/])\/\/[^\n]*\n\s*$/.test(pre));
 					fc.pre(!/^\s*\/\/[^\n]*\n/.test(post));
 
 					const stripped = strip(code, options);
@@ -827,7 +852,7 @@ test("preserve SPDX ID comments", async (t) => {
 			fc.property(
 				arb.codeWithComment("spdx"),
 				({ code, comment, pre, post }) => {
-					fc.pre(!/\/\/[^\n]*\n\s*$/.test(pre));
+					fc.pre(!/(?:^|[^/])\/\/[^\n]*\n\s*$/.test(pre));
 					fc.pre(!/^\s*\/\/[^\n]*\n/.test(post));
 
 					const stripped = strip(code, options);
