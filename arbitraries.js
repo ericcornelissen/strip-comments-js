@@ -51,11 +51,16 @@ function commentArbitrary(type) {
 									.map(([s, e]) => `${s}-${e}`),
 							),
 							trailer: fc
-								.string({
-									minLength: 1,
-									unit: fc.constantFrom(...charsets.alphanumeric(), " "),
+								.record({
+									id: fc.string({
+										minLength: 1,
+										unit: fc.constantFrom(...charsets.alphanumeric()),
+									}),
+									text: fc.string({
+										unit: fc.constantFrom(...charsets.alphanumeric(), " "),
+									}),
 								})
-								.map((trailer) => ` ${trailer}`),
+								.map(({ id, text }) => ` ${id} ${text}`),
 						})
 						.map(({ trailer, year }) => ` Copyright (C) ${year}${trailer}`),
 				})

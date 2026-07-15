@@ -35,8 +35,7 @@ export function strip(code, options) {
 	const result = new StringBuilder();
 	const chars = new Scanner(code + "\n");
 
-	if (!$code(chars, result, options, true)) return code;
-	if (!chars.isEmpty()) return code;
+	if (!$code(chars, result, options, null)) return code;
 
 	result.shrink();
 	return result.toString();
@@ -64,9 +63,8 @@ function $blockComment(chars, result, options) {
 
 			const content = comment
 				.slice(2, comment.length - 2)
-				.replaceAll(/(?<=[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
+				.replaceAll(/(?<=^|[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
 				.replaceAll(/^[\t ]*(?![\t !*])|(?<![\t ])[\t ]*$/g, "");
-
 			if (
 				block &&
 				(jsdoc || !content.startsWith("*")) &&
@@ -100,27 +98,27 @@ function $blockComment(chars, result, options) {
  * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Options} options
- * @param {boolean} [top]
+ * @param {"{" | "(" | null} match
  * @returns {boolean}
  */
-function $code(chars, result, options, top = false) {
+function $code(chars, result, options, match) {
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		result.push(char);
 
 		switch (char) {
 			case "{": {
-				if (!$code(chars, result, options)) return false;
+				if (!$code(chars, result, options, "{")) return false;
 				break;
 			}
 			case "}": {
-				return true;
+				return match === "{";
 			}
 
 			case "(": {
 				const code = result.slice(0, -1);
 
-				if (!$code(chars, result, options)) return false;
+				if (!$code(chars, result, options, "(")) return false;
 
 				if (/(?:^|[\s);}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
@@ -136,7 +134,7 @@ function $code(chars, result, options, top = false) {
 				break;
 			}
 			case ")": {
-				return true;
+				return match === "(";
 			}
 
 			case "'":
@@ -164,7 +162,7 @@ function $code(chars, result, options, top = false) {
 		}
 	}
 
-	return top;
+	return match === null;
 }
 
 /**
@@ -306,7 +304,7 @@ function $template(chars, result, options) {
 			case "$": {
 				if (chars.peek() === "{") {
 					result.push(chars.next());
-					$code(chars, result, options);
+					if (!$code(chars, result, options, "{")) return false;
 				}
 				break;
 			}
