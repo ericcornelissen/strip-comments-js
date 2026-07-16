@@ -34,6 +34,29 @@ jobs:
         env:
           WHAT: ${{ matrix.what }}
         run: npm run "check:${WHAT}"
+  codeql:
+    name: CodeQL (${{ matrix.what }})
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write # To upload CodeQL results
+    strategy:
+      fail-fast: false
+      matrix:
+        what:
+          - actions
+          - javascript
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
+        with:
+          config-file: ./.github/codeql.yml
+          languages: ${{ matrix.what }}
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
   dogfeed:
     name: Dogfeed
     runs-on: ubuntu-24.04

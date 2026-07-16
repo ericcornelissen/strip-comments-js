@@ -26,3 +26,7 @@ updates:
       default-days: 7
     labels:
       - dependencies
+    groups:
+      codeql:
+        patterns:
+          - github/codeql-action/*
