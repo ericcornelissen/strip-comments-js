@@ -1,0 +1,10 @@
+# Configuration file for CodeQL (https://codeql.github.com/)
+
+name: strip-comments-js CodeQL config
+
+packs:
+  - githubsecuritylab/codeql-javascript-libs@0.6.0
+  - githubsecuritylab/codeql-javascript-queries@0.6.0
+
+queries:
+  - uses: security-extended
