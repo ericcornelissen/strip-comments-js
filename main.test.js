@@ -521,20 +521,102 @@ test("preserve block comments", async (t) => {
 	};
 
 	const testdata = {
-		"block comment": [`// foobar`, ``],
-		"line comment": [`/* foobar */`, `/* foobar */`],
+		"block comment": [`/* foobar */`, `/* foobar */`],
+		"block comment, empty": [`/**/`, `/**/`],
+		"block comment, multiline": [`/* foo \n bar */`, `/* foo \n bar */`],
+		"block comment, two in a row": [`/* foo *//* bar */`, `/* foo *//* bar */`],
+		"block comment containing a license header, line": [
+			`/* // Copyright (C) 2026  Henk */`,
+			`/* // Copyright (C) 2026  Henk */`,
+		],
+		"block comment containing a line comment": [
+			`/* // foobar */`,
+			`/* // foobar */`,
+		],
+		"block comment containing a protected comment, line": [
+			`/* //! foobar */`,
+			`/* //! foobar */`,
+		],
+		"block comment containing a sourcemap comment": [
+			`/* //# sourceMappingURL=foobar.js.map */`,
+			`/* //# sourceMappingURL=foobar.js.map */`,
+		],
+		"block comment containing a spdx identifier": [
+			`/* // SPDX-License-Identifier: Apache-2.0 */`,
+			`/* // SPDX-License-Identifier: Apache-2.0 */`,
+		],
+		"block comment followed by a jsdoc comment": [
+			`/* foo *//** bar */`,
+			`/* foo *//** bar */`,
+		],
+		"block comment followed by a license header, block": [
+			`/* foo *//* Copyright (C) 2026  Henk */`,
+			`/* foo *//* Copyright (C) 2026  Henk */`,
+		],
+		"block comment followed by a license header, line": [
+			`/* foo */// Copyright (C) 2026  Henk`,
+			`/* foo */`,
+		],
+		"block comment followed by a line comment": [
+			`/* foo */// bar`,
+			`/* foo */`,
+		],
+		"block comment followed by a protected comment, block": [
+			`/* foo *//*! bar */`,
+			`/* foo *//*! bar */`,
+		],
+		"block comment followed by a protected comment, line": [
+			`/* foo *///! bar`,
+			`/* foo */`,
+		],
+		"block comment followed by a sourcemap comment": [
+			`/* foo *///# sourceMappingURL=bar.js.map`,
+			`/* foo */`,
+		],
+		"block comment followed by a spdx identifier": [
+			`/* foo */// SPDX-License-Identifier: Apache-2.0`,
+			`/* foo */`,
+		],
+		"block comment lead by a jsdoc comment": [
+			`/** foo *//* bar */`,
+			`/** foo *//* bar */`,
+		],
+		"block comment lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk *//* bar */`,
+			`/* Copyright (C) 2026  Henk *//* bar */`,
+		],
+		"block comment lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n/* bar */`,
+			`/* bar */`,
+		],
+		"block comment lead by a line comment": [`// foo\n/* bar */`, `/* bar */`],
+		"block comment lead by a protected comment, block": [
+			`/*! foo *//* bar */`,
+			`/*! foo *//* bar */`,
+		],
+		"block comment lead by a protected comment, line": [
+			`//! foo\n/* bar */`,
+			`/* bar */`,
+		],
+		"block comment lead by a sourcemap comment": [
+			`//# sourceMappingURL=foo.js.map\n/* bar */`,
+			`/* bar */`,
+		],
+		"block comment lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n/* bar */`,
+			`/* bar */`,
+		],
 		"jsdoc comment": [`/** foobar */`, `/** foobar */`],
-		"protected block comment": [`/*! foobar */`, `/*! foobar */`],
-		"protected line comment": [`//! foobar`, ``],
-		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
 		"license header, block": [
 			`/* Copyright (C) 2026  Henk */`,
 			`/* Copyright (C) 2026  Henk */`,
 		],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"line comment": [`// foobar`, ``],
+		"protected comment, block": [`/*! foobar */`, `/*! foobar */`],
+		"protected comment, line": [`//! foobar`, ``],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
-		"line comment in block comment": [`/* // a */`, `/* // a */`],
-		"line comment after block comment": [`/**///`, `/**/`],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -555,60 +637,6 @@ test("preserve block comments", async (t) => {
 	await t.test("any line comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
-				const stripped = strip(code, options);
-				assert.ok(!stripped.includes(comment));
-			}),
-		);
-	});
-});
-
-test("preserve line comments", async (t) => {
-	const options = {
-		...baseOptions,
-		line: false,
-	};
-
-	const testdata = {
-		"block comment": [`// foobar`, `// foobar`],
-		"line comment": [`/* foobar */`, ``],
-		"jsdoc comment": [`/** foobar */`, ``],
-		"protected block comment": [`/*! foobar */`, ``],
-		"protected line comment": [`//! foobar`, `//! foobar`],
-		"sourcemap comment": [
-			`//# sourceMappingURL=foobar.js.map`,
-			`//# sourceMappingURL=foobar.js.map`,
-		],
-		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
-		"license header, line": [
-			`// Copyright (C) 2026  Henk`,
-			`// Copyright (C) 2026  Henk`,
-		],
-		"spdx identifier": [
-			`// SPDX-License-Identifier: Apache-2.0`,
-			`// SPDX-License-Identifier: Apache-2.0`,
-		],
-		"line comment in line comment": [`//// a`, `//// a`],
-		"block comment in line comment": [`// /* b */`, `// /* b */`],
-	};
-
-	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
-			assert.equal(strip(inp, options), out);
-		});
-	}
-
-	await t.test("any line comment", () => {
-		fc.assert(
-			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
-				const stripped = strip(code, options);
-				assert.ok(stripped.includes(comment.trim()));
-			}),
-		);
-	});
-
-	await t.test("any block comment", () => {
-		fc.assert(
-			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
 				const stripped = strip(code, options);
 				assert.ok(!stripped.includes(comment));
 			}),
@@ -623,17 +651,105 @@ test("preserve JSDoc comments", async (t) => {
 	};
 
 	const testdata = {
-		"block comment": [`// foobar`, ``],
-		"line comment": [`/* foobar */`, ``],
-		"jsdoc comment, single line": [`/** foobar */`, `/** foobar */`],
+		"block comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, `/** foobar */`],
+		"jsdoc comment, empty": [`/***/`, `/***/`],
 		"jsdoc comment, multiline": [`/**\n * foobar\n */`, `/**\n * foobar\n */`],
-		"protected block comment": [`/*! foobar */`, ``],
-		"protected line comment": [`//! foobar`, ``],
+		"jsdoc comment, two in a row": [
+			`/** foo *//** bar */`,
+			`/** foo *//** bar */`,
+		],
+		"jsdoc comment containing a license header, line": [
+			`/** // Copyright (C) 2026  Henk */`,
+			`/** // Copyright (C) 2026  Henk */`,
+		],
+		"jsdoc comment containing a line comment": [
+			`/** // foobar */`,
+			`/** // foobar */`,
+		],
+		"jsdoc comment containing a protected comment, line": [
+			`/** //! foobar */`,
+			`/** //! foobar */`,
+		],
+		"jsdoc comment containing a sourcemap comment": [
+			`/** //# sourceMappingURL=foobar.js.map */`,
+			`/** //# sourceMappingURL=foobar.js.map */`,
+		],
+		"jsdoc comment containing a spdx identifier": [
+			`/** // SPDX-License-Identifier: Apache-2.0 */`,
+			`/** // SPDX-License-Identifier: Apache-2.0 */`,
+		],
+		"jsdoc comment followed by a block comment": [
+			`/** foo *//* bar */`,
+			`/** foo */`,
+		],
+		"jsdoc comment followed by a license header, block": [
+			`/** foo *//* Copyright (C) 2026  Henk */`,
+			`/** foo */`,
+		],
+		"jsdoc comment followed by a license header, line": [
+			`/** foo */// Copyright (C) 2026  Henk`,
+			`/** foo */`,
+		],
+		"jsdoc comment followed by a line comment": [
+			`/** foo */// bar`,
+			`/** foo */`,
+		],
+		"jsdoc comment followed by a protected comment, block": [
+			`/** foo *//*! bar */`,
+			`/** foo */`,
+		],
+		"jsdoc comment followed by a protected comment, line": [
+			`/** foo *///! bar`,
+			`/** foo */`,
+		],
+		"jsdoc comment followed by a sourcemap comment": [
+			`/** foo *///# sourceMappingURL=bar.js.map`,
+			`/** foo */`,
+		],
+		"jsdoc comment followed by a spdx identifier": [
+			`/** foo */// SPDX-License-Identifier: Apache-2.0`,
+			`/** foo */`,
+		],
+		"jsdoc comment lead by a block comment": [
+			`/* foo *//** bar */`,
+			`/** bar */`,
+		],
+		"jsdoc comment lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk *//** bar */`,
+			`/** bar */`,
+		],
+		"jsdoc comment lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n/** bar */`,
+			`/** bar */`,
+		],
+		"jsdoc comment lead by a line comment": [
+			`// foo\n/** bar */`,
+			`/** bar */`,
+		],
+		"jsdoc comment lead by a protected comment, block": [
+			`/*! foo *//** bar */`,
+			`/** bar */`,
+		],
+		"jsdoc comment lead by a protected comment, line": [
+			`//! foo\n/** bar */`,
+			`/** bar */`,
+		],
+		"jsdoc comment lead by a sourcemap comment": [
+			`//# sourceMappingURL=foo.js.map\n/** bar */`,
+			`/** bar */`,
+		],
+		"jsdoc comment lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n/** bar */`,
+			`/** bar */`,
+		],
+		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"line comment": [`// foobar`, ``],
+		"protected comment, block": [`/*! foobar */`, ``],
+		"protected comment, line": [`//! foobar`, ``],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
-		"license header": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
-		"line comment in JSDoc comment": [`/** // a */`, `/** // a */`],
-		"line comment after JSDoc comment": [`/***///`, `/***/`],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -670,6 +786,358 @@ test("preserve JSDoc comments", async (t) => {
 	});
 });
 
+test("preserve license header comments", async (t) => {
+	const options = {
+		...baseOptions,
+		licenseHeader: false,
+	};
+
+	const testdata = {
+		"block comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"license block header": [
+			`/* Copyright (C) 2025  Kip */`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header, multiline": [
+			`/* Copyright (C) 2025  Kip\n *\n * This program is free software: ...*/`,
+			`/* Copyright (C) 2025  Kip\n *\n * This program is free software: ...*/`,
+		],
+		"license block header, not quite, prefix": [
+			`/* xCopyright (C) 2025-2026 */`,
+			``,
+		],
+		"license block header, not quite, suffix": [
+			`/* Copyright (C) 2025-2026x */`,
+			``,
+		],
+		"license block header, two in a row": [
+			`/* Copyright (C) 2025  Kip *//* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2025  Kip *//* Copyright (C) 2026  Henk */`,
+		],
+		"license block header, year range": [
+			`/* Copyright (C) 2025-2026  John */`,
+			`/* Copyright (C) 2025-2026  John */`,
+		],
+		"license block header followed by a block comment": [
+			`/* Copyright (C) 2025  Kip *//* bar */`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header followed by a jsdoc comment": [
+			`/* Copyright (C) 2025  Kip *//** bar */`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header followed by a license header, line": [
+			`/* Copyright (C) 2025  Kip */// Copyright (C) 2026  Henk`,
+			`/* Copyright (C) 2025  Kip */// Copyright (C) 2026  Henk`,
+		],
+		"license block header followed by a line comment": [
+			`/* Copyright (C) 2025  Kip */// bar`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header followed by a protected comment, block": [
+			`/* Copyright (C) 2025  Kip *//*! bar */`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header followed by a protected comment, line": [
+			`/* Copyright (C) 2025  Kip *///! bar`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header followed by a sourcemap comment": [
+			`/* Copyright (C) 2025  Kip *///# sourceMappingURL=bar.js.map`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header followed by a spdx identifier": [
+			`/* Copyright (C) 2025  Kip */// SPDX-License-Identifier: Apache-2.0`,
+			`/* Copyright (C) 2025  Kip */`,
+		],
+		"license block header lead by a block comment": [
+			`/* foo *//* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license block header lead by a jsdoc comment": [
+			`/** foo *//* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license block header lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n/* Copyright (C) 2026  Henk */`,
+			`// Copyright (C) 2026  Henk\n/* Copyright (C) 2026  Henk */`,
+		],
+		"license block header lead by a line comment": [
+			`// foo\n/* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license block header lead by a protected comment, block": [
+			`/*! foo *//* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license block header lead by a protected comment, line": [
+			`//! foo\n/* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license block header lead by a sourcemap comment": [
+			`//# sourceMappingURL=foo.js.map\n/* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license block header lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n/* Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2026  Henk */`,
+		],
+		"license line header": [
+			`// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header, multiline": [
+			`// Copyright (C) 2026  Henk\n//\n// This program is free software: ...`,
+			`// Copyright (C) 2026  Henk\n//\n// This program is free software: ...`,
+		],
+		"license line header, not quite, prefix": [
+			`// xCopyright (C) 2025-2026`,
+			``,
+		],
+		"license line header, not quite, suffix": [
+			`// Copyright (C) 2025-2026x`,
+			``,
+		],
+		"license line header, year range": [
+			`// Copyright (C) 2025-2026  John`,
+			`// Copyright (C) 2025-2026  John`,
+		],
+		"license line header followed by a block comment": [
+			`// Copyright (C) 2026  Henk\n/* bar */`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header followed by a jsdoc comment": [
+			`//! Copyright (C) 2026  Henk\n/** bar */`,
+			`//! Copyright (C) 2026  Henk`,
+		],
+		"license line header followed by a license header, block": [
+			`// Copyright (C) 2026  Henk\n/* Copyright (C) 2026  Henk */`,
+			`// Copyright (C) 2026  Henk\n/* Copyright (C) 2026  Henk */`,
+		],
+		"license line header followed by a line comment": [
+			`// Copyright (C) 2026  Henk\n// bar`,
+			`// Copyright (C) 2026  Henk\n// bar`,
+		],
+		"license line header followed by a protected comment, block": [
+			`// Copyright (C) 2026  Henk\n/*! bar */`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header followed by a protected comment, line": [
+			`// Copyright (C) 2026  Henk\n//! bar`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header followed by a sourcemap comment": [
+			`// Copyright (C) 2026  Henk\n//# sourceMappingURL=bar.js.map`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header followed by a spdx identifier": [
+			`// Copyright (C) 2026  Henk\n// SPDX-License-Identifier: Apache-2.0`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a block comment": [
+			`/* foo */// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a jsdoc comment": [
+			`/** foo */// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk */// Copyright (C) 2026  Henk`,
+			`/* Copyright (C) 2026  Henk */// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a line comment": [
+			`// foo\n// Copyright (C) 2026  Henk`,
+			`// foo\n// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a protected comment, block": [
+			`/*! foo */// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a protected comment, line": [
+			`//! foo \n// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map\n// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"license line header lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"line comment": [`// foobar`, ``],
+		"protected comment, block": [`/*! foobar */`, ``],
+		"protected comment, line": [`//! foobar`, ``],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
+
+	await t.test("any license header", () => {
+		fc.assert(
+			fc.property(
+				arb.codeWithComment("license header"),
+				({ code, comment }) => {
+					const stripped = strip(code, options);
+					assert.ok(stripped.includes(comment.trim()));
+				},
+			),
+		);
+	});
+
+	await t.test("any non-license header comment", () => {
+		fc.assert(
+			fc.property(
+				arb.codeWithComment("non-license header"),
+				({ code, comment }) => {
+					const stripped = strip(code, options);
+					assert.ok(!stripped.includes(comment));
+				},
+			),
+		);
+	});
+});
+
+test("preserve line comments", async (t) => {
+	const options = {
+		...baseOptions,
+		line: false,
+	};
+
+	const testdata = {
+		"block comment": [`/* foobar */`, ``],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, line": [
+			`// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
+		],
+		"line comment": [`// foobar`, `// foobar`],
+		"line comment, empty": [`//`, `//`],
+		"line comment, two in a row": [`// foo\n// bar`, `// foo\n// bar`],
+		"line comment containing a block comment": [`// /* a */`, `// /* a */`],
+		"line comment containing a jsdoc comment": [`// /** b */`, `// /** b */`],
+		"line comment containing a license header, block": [
+			`// /* Copyright (C) 2026  Henk */`,
+			`// /* Copyright (C) 2026  Henk */`,
+		],
+		"line comment containing a license header, line": [
+			`// // Copyright (C) 2026  Henk`,
+			`// // Copyright (C) 2026  Henk`,
+		],
+		"line comment containing a line comment": [`// // c`, `// // c`],
+		"line comment containing a protected comment, block": [
+			`// foo /*! bar */`,
+			`// foo /*! bar */`,
+		],
+		"line comment containing a protected comment, line": [
+			`// foo //! bar`,
+			`// foo //! bar`,
+		],
+		"line comment containing a sourcemap comment": [
+			`// foo //# sourceMappingURL=bar.js.map`,
+			`// foo //# sourceMappingURL=bar.js.map`,
+		],
+		"line comment containing a spdx identifier": [
+			`// // SPDX-License-Identifier: Apache-2.0`,
+			`// // SPDX-License-Identifier: Apache-2.0`,
+		],
+		"line comment followed by a block comment": [`// foo\n/* bar */`, `// foo`],
+		"line comment followed by a jsdoc comment": [`// a\n/** b */`, `// a`],
+		"line comment followed by a license header, block": [
+			`// foo\n/* Copyright (C) 2026  Henk */`,
+			`// foo`,
+		],
+		"line comment followed by a license header, line": [
+			`// foo\n// Copyright (C) 2026  Henk`,
+			`// foo\n// Copyright (C) 2026  Henk`,
+		],
+		"line comment followed by a protected comment, block": [
+			`// foo\n/*! bar */`,
+			`// foo`,
+		],
+		"line comment followed by a protected comment, line": [
+			`// foo\n//! bar`,
+			`// foo\n//! bar`,
+		],
+		"line comment followed by a sourcemap comment": [
+			`// foo\n//# sourceMappingURL=bar.js.map`,
+			`// foo\n//# sourceMappingURL=bar.js.map`,
+		],
+		"line comment followed by a spdx identifier": [
+			`// foo\n// SPDX-License-Identifier: Apache-2.0`,
+			`// foo\n// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"line comment lead by a block comment": [`/* foo */// bar`, `// bar`],
+		"line comment lead by a jsdoc comment": [`/** foo */// bar`, `// bar`],
+		"line comment lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk */// foo`,
+			`// foo`,
+		],
+		"line comment lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n// foo\n`,
+			`// Copyright (C) 2026  Henk\n// foo\n`,
+		],
+		"line comment lead by a protected comment, block": [
+			`/*! foo */// bar`,
+			`// bar`,
+		],
+		"line comment lead by a protected comment, line": [
+			`//! foo\n// bar`,
+			`//! foo\n// bar`,
+		],
+		"line comment lead by a sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map\n// bar`,
+			`//# sourceMappingURL=foobar.js.map\n// bar`,
+		],
+		"line comment lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n// bar`,
+			`// SPDX-License-Identifier: Apache-2.0\n// bar`,
+		],
+		"protected comment, block": [`/*! foobar */`, ``],
+		"protected comment, line": [`//! foobar`, `//! foobar`],
+		"sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map`,
+			`//# sourceMappingURL=foobar.js.map`,
+		],
+		"spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		await t.test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
+
+	await t.test("any line comment", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(stripped.includes(comment.trim()));
+			}),
+		);
+	});
+
+	await t.test("any block comment", () => {
+		fc.assert(
+			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
+				const stripped = strip(code, options);
+				assert.ok(!stripped.includes(comment));
+			}),
+		);
+	});
+});
+
 test("preserve protected comments", async (t) => {
 	const options = {
 		...baseOptions,
@@ -677,16 +1145,213 @@ test("preserve protected comments", async (t) => {
 	};
 
 	const testdata = {
-		"block comment": [`// foobar`, ``],
-		"line comment": [`/* foobar */`, ``],
+		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
+		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"line comment": [`// foobar`, ``],
 		"protected block comment": [`/*! foobar */`, `/*! foobar */`],
+		"protected block comment, empty": [`/*!*/`, `/*!*/`],
+		"protected block comment, multiline": [
+			`/*!\n * foobar\n */`,
+			`/*!\n * foobar\n */`,
+		],
+		"protected block comment, two in a row": [
+			`/*! foo *//*! bar */`,
+			`/*! foo *//*! bar */`,
+		],
+		"protected block comment containing a license header, line": [
+			`/*! // Copyright (C) 2026  Henk */`,
+			`/*! // Copyright (C) 2026  Henk */`,
+		],
+		"protected block comment containing a line comment": [
+			`/*! // foobar */`,
+			`/*! // foobar */`,
+		],
+		"protected block comment containing a protected comment, line": [
+			`/*! //! foobar */`,
+			`/*! //! foobar */`,
+		],
+		"protected block comment containing a sourcemap comment": [
+			`/*! //# sourceMappingURL=foobar.js.map */`,
+			`/*! //# sourceMappingURL=foobar.js.map */`,
+		],
+		"protected block comment containing a spdx identifier": [
+			`/*! // SPDX-License-Identifier: Apache-2.0 */`,
+			`/*! // SPDX-License-Identifier: Apache-2.0 */`,
+		],
+		"protected block comment followed by a block comment": [
+			`/*! foo *//* bar */`,
+			`/*! foo */`,
+		],
+		"protected block comment followed by a jsdoc comment": [
+			`/*! foo *//** bar */`,
+			`/*! foo */`,
+		],
+		"protected block comment followed by a license header, block": [
+			`/*! foo *//* Copyright (C) 2026  Henk */`,
+			`/*! foo */`,
+		],
+		"protected block comment followed by a license header, line": [
+			`/*! foo */// Copyright (C) 2026  Henk`,
+			`/*! foo */`,
+		],
+		"protected block comment followed by a line comment": [
+			`/*! foo */// bar`,
+			`/*! foo */`,
+		],
+		"protected block comment followed by a protected comment, line": [
+			`/*! foo *///! bar`,
+			`/*! foo *///! bar`,
+		],
+		"protected block comment followed by a sourcemap comment": [
+			`/*! foo *///# sourceMappingURL=bar.js.map`,
+			`/*! foo */`,
+		],
+		"protected block comment followed by a spdx identifier": [
+			`/*! foo */// SPDX-License-Identifier: Apache-2.0`,
+			`/*! foo */`,
+		],
+		"protected block comment lead by a block comment": [
+			`/* foo *//*! bar */`,
+			`/*! bar */`,
+		],
+		"protected block comment lead by a jsdoc comment": [
+			`/** foo *//*! bar */`,
+			`/*! bar */`,
+		],
+		"protected block comment lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk *//*! bar */`,
+			`/*! bar */`,
+		],
+		"protected block comment lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n/*! bar */`,
+			`/*! bar */`,
+		],
+		"protected block comment lead by a line comment": [
+			`// foo\n/*! bar */`,
+			`/*! bar */`,
+		],
+		"protected block comment lead by a protected comment, line": [
+			`//! foo\n/*! bar */`,
+			`//! foo\n/*! bar */`,
+		],
+		"protected block comment lead by a sourcemap comment": [
+			`//# sourceMappingURL=foo.js.map\n/*! bar */`,
+			`/*! bar */`,
+		],
+		"protected block comment lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n/*! bar */`,
+			`/*! bar */`,
+		],
 		"protected line comment": [`//! foobar`, `//! foobar`],
+		"protected line comment, empty": [`//!`, `//!`],
+		"protected line comment, two in a row": [
+			`//! foo\n//! bar`,
+			`//! foo\n//! bar`,
+		],
+		"protected line comment containing a block comment": [
+			`//! /* a */`,
+			`//! /* a */`,
+		],
+		"protected line comment containing a jsdoc comment": [
+			`//! /** b */`,
+			`//! /** b */`,
+		],
+		"protected line comment containing a license header, block": [
+			`//! /* Copyright (C) 2026  Henk */`,
+			`//! /* Copyright (C) 2026  Henk */`,
+		],
+		"protected line comment containing a license header, line": [
+			`//! // Copyright (C) 2026  Henk`,
+			`//! // Copyright (C) 2026  Henk`,
+		],
+		"protected line comment containing a line comment": [
+			`//! // c`,
+			`//! // c`,
+		],
+		"protected line comment containing a protected comment, block": [
+			`//! foo /*! bar */`,
+			`//! foo /*! bar */`,
+		],
+		"protected line comment containing a protected comment, line": [
+			`//! foo //! bar`,
+			`//! foo //! bar`,
+		],
+		"protected line comment containing a sourcemap comment": [
+			`//! foo //# sourceMappingURL=bar.js.map`,
+			`//! foo //# sourceMappingURL=bar.js.map`,
+		],
+		"protected line comment containing a spdx identifier": [
+			`//! // SPDX-License-Identifier: Apache-2.0`,
+			`//! // SPDX-License-Identifier: Apache-2.0`,
+		],
+		"protected line comment followed by a block comment": [
+			`//! foo\n/* bar */`,
+			`//! foo`,
+		],
+		"protected line comment followed by a jsdoc comment": [
+			`//! foo\n/** bar */`,
+			`//! foo`,
+		],
+		"protected line comment followed by a license header, block": [
+			`//! foo\n/* Copyright (C) 2026  Henk */`,
+			`//! foo`,
+		],
+		"protected line comment followed by a license header, line": [
+			`//! foo\n// Copyright (C) 2026  Henk`,
+			`//! foo`,
+		],
+		"protected line comment followed by a line comment": [
+			`//! foo\n// bar`,
+			`//! foo`,
+		],
+		"protected line comment followed by a protected comment, block": [
+			`//! foo\n/*! bar */`,
+			`//! foo\n/*! bar */`,
+		],
+		"protected line comment followed by a sourcemap comment": [
+			`//! foo\n//# sourceMappingURL=bar.js.map`,
+			`//! foo`,
+		],
+		"protected line comment followed by a spdx identifier": [
+			`//! foo\n// SPDX-License-Identifier: Apache-2.0`,
+			`//! foo`,
+		],
+		"protected line comment lead by a block comment": [
+			`/* foo *///! bar`,
+			`//! bar`,
+		],
+		"protected line comment lead by a jsdoc comment": [
+			`/** foo *///! bar`,
+			`//! bar`,
+		],
+		"protected line comment lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk *///! bar`,
+			`//! bar`,
+		],
+		"protected line comment lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n//! bar`,
+			`//! bar`,
+		],
+		"protected line comment lead by a line comment": [
+			`// foo\n//! bar`,
+			`//! bar`,
+		],
+		"protected line comment lead by a protected comment, block": [
+			`/*! foo *///! bar`,
+			`/*! foo *///! bar`,
+		],
+		"protected line comment lead by a sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map\n//! bar`,
+			`//! bar`,
+		],
+		"protected line comment lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n//! bar`,
+			`//! bar`,
+		],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
-		"license header": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
-		"line comment in protected comment": [`/*! // a */`, `/*! // a */`],
-		"line comment after protected comment": [`/*!*///`, `/*!*/`],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -727,18 +1392,87 @@ test("preserve sourcemap comments", async (t) => {
 	};
 
 	const testdata = {
-		"block comment": [`// foobar`, ``],
-		"line comment": [`/* foobar */`, ``],
+		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
-		"protected block comment": [`/*! foobar */`, ``],
-		"protected line comment": [`//! foobar`, ``],
+		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"line comment": [`// foobar`, ``],
+		"protected comment, block": [`/*! foobar */`, ``],
+		"protected comment, line": [`//! foobar`, ``],
 		"sourcemap comment": [
 			`//# sourceMappingURL=foobar.js.map`,
 			`//# sourceMappingURL=foobar.js.map`,
 		],
-		"license header": [`// Copyright (C) 2026  Henk`, ``],
+		"sourcemap comment, not quite": [`// # sourceMappingURL=fake.js.map`, ``],
+		"sourcemap comment, two in row": [
+			`//# sourceMappingURL=foo.js.map\n//# sourceMappingURL=bar.js.map`,
+			`//# sourceMappingURL=foo.js.map\n//# sourceMappingURL=bar.js.map`,
+		],
+		"sourcemap comment followed by a block comment": [
+			`//# sourceMappingURL=a.js.map\n/* bar */`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment followed by a jsdoc comment": [
+			`//# sourceMappingURL=a.js.map\n/** bar */`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment followed by a license header, block": [
+			`//# sourceMappingURL=a.js.map\n/* Copyright (C) 2026  Henk */`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment followed by a license header, line": [
+			`//# sourceMappingURL=a.js.map\n// Copyright (C) 2026  Henk`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment followed by a line comment": [
+			`//# sourceMappingURL=a.js.map\n// bar`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment followed by a protected comment, block": [
+			`//# sourceMappingURL=a.js.map\n/*! bar */`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment followed by a protected comment, line": [
+			`//# sourceMappingURL=a.js.map\n//! bar`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment followed by a spdx identifier": [
+			`//# sourceMappingURL=a.js.map\n// SPDX-License-Identifier: Apache-2.0`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a block comment": [
+			`/* foo *///# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a jsdoc comment": [
+			`/** foo *///# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk *///# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n//# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a line comment": [
+			`// foo\n//# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a protected comment, block": [
+			`/*! foo *///# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a protected comment, line": [
+			`//! foo\n//# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
+		"sourcemap comment lead by a spdx identifier": [
+			`// SPDX-License-Identifier: Apache-2.0\n//# sourceMappingURL=a.js.map`,
+			`//# sourceMappingURL=a.js.map`,
+		],
 		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
-		"not quite a sourcemap comment": [`// # sourceMappingURL=fake.js.map`, ``],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -772,63 +1506,6 @@ test("preserve sourcemap comments", async (t) => {
 	});
 });
 
-test("preserve license header comments", async (t) => {
-	const options = {
-		...baseOptions,
-		licenseHeader: false,
-	};
-
-	const testdata = {
-		"block comment": [`// foobar`, ``],
-		"line comment": [`/* foobar */`, ``],
-		"jsdoc comment": [`/** foobar */`, ``],
-		"protected block comment": [`/*! foobar */`, ``],
-		"protected line comment": [`//! foobar`, ``],
-		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
-		"license header, block": [
-			`/* Copyright (C) 2026  Kip\n *\n * This program is free software: ...*/`,
-			`/* Copyright (C) 2026  Kip\n *\n * This program is free software: ...*/`,
-		],
-		"license header, line": [
-			`// Copyright (C) 2025-2026  Henk\n//\n// This program is free software: ...`,
-			`// Copyright (C) 2025-2026  Henk\n//\n// This program is free software: ...`,
-		],
-		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
-		"not quite, prefix": [`// xCopyright (C) 2025-2026`, ``],
-		"not quite, suffix": [`// Copyright (C) 2025-2026x`, ``],
-	};
-
-	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
-			assert.equal(strip(inp, options), out);
-		});
-	}
-
-	await t.test("any license header", () => {
-		fc.assert(
-			fc.property(
-				arb.codeWithComment("license header"),
-				({ code, comment }) => {
-					const stripped = strip(code, options);
-					assert.ok(stripped.includes(comment.trim()));
-				},
-			),
-		);
-	});
-
-	await t.test("any non-license header comment", () => {
-		fc.assert(
-			fc.property(
-				arb.codeWithComment("non-license header"),
-				({ code, comment }) => {
-					const stripped = strip(code, options);
-					assert.ok(!stripped.includes(comment));
-				},
-			),
-		);
-	});
-});
-
 test("preserve SPDX ID comments", async (t) => {
 	const options = {
 		...baseOptions,
@@ -836,23 +1513,98 @@ test("preserve SPDX ID comments", async (t) => {
 	};
 
 	const testdata = {
-		"block comment": [`// foobar`, ``],
-		"line comment": [`/* foobar */`, ``],
+		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
-		"protected block comment": [`/*! foobar */`, ``],
-		"protected line comment": [`//! foobar`, ``],
+		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"line comment": [`// foobar`, ``],
+		"protected comment, block": [`/*! foobar */`, ``],
+		"protected comment, line": [`//! foobar`, ``],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
-		"license header": [`// Copyright (C) 2026  Henk`, ``],
 		"spdx identifier": [
 			`// SPDX-License-Identifier: Apache-2.0`,
 			`// SPDX-License-Identifier: Apache-2.0`,
 		],
-		"spdx identifier with trailing whitespace": [
+		"spdx identifier, not quite, prefix": [
+			`//x SPDX-License-Identifier: fake`,
+			``,
+		],
+		"spdx identifier, not quite, suffix": [
+			`// SPDX-License-Identifier: fake x`,
+			``,
+		],
+		"spdx identifier, trailing whitespace": [
 			`// SPDX-License-Identifier: Apache-2.0 `,
 			`// SPDX-License-Identifier: Apache-2.0 `,
 		],
-		"not quite, prefix": [`//x SPDX-License-Identifier: fake`, ``],
-		"not quite, suffix": [`// SPDX-License-Identifier: fake x`, ``],
+		"spdx identifier, two in row": [
+			`// SPDX-License-Identifier: Apache-2.0\n// SPDX-License-Identifier: MIT`,
+			`// SPDX-License-Identifier: Apache-2.0\n// SPDX-License-Identifier: MIT`,
+		],
+		"spdx identifier followed by a block comment": [
+			`// SPDX-License-Identifier: Apache-2.0\n/* bar */`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier followed by a jsdoc comment": [
+			`// SPDX-License-Identifier: Apache-2.0\n/** bar */`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier followed by a license header, block": [
+			`// SPDX-License-Identifier: Apache-2.0\n/* Copyright (C) 2026  Henk */`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier followed by a license header, line": [
+			`// SPDX-License-Identifier: Apache-2.0\n// Copyright (C) 2026  Henk`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier followed by a line comment": [
+			`// SPDX-License-Identifier: Apache-2.0\n// bar`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier followed by a protected comment, block": [
+			`// SPDX-License-Identifier: Apache-2.0\n/*! bar */`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier followed by a protected comment, line": [
+			`// SPDX-License-Identifier: Apache-2.0\n//! bar`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier followed by a sourcemap comment": [
+			`// SPDX-License-Identifier: Apache-2.0\n//# sourceMappingURL=foobar.js.map`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a block comment": [
+			`/* foo */// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a jsdoc comment": [
+			`/** foo */// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a license header, block": [
+			`/* Copyright (C) 2026  Henk */// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a license header, line": [
+			`// Copyright (C) 2026  Henk\n// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a line comment": [
+			`// foo\n// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a protected comment, block": [
+			`/*! foo */// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a protected comment, line": [
+			`//! foo\n// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
+		"spdx identifier lead by a sourcemap comment": [
+			`//# sourceMappingURL=foobar.js.map\n// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0`,
+		],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
