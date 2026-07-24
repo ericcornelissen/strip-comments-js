@@ -123,9 +123,8 @@ function $code(chars, result, options, match) {
 				if (/(?:^|[\s);}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
 
-					const next = chars.peek();
-					const nextnext = chars.peek(2);
-					if (next === "/" && nextnext !== "/" && nextnext !== "*") {
+					const next = chars.peek(2);
+					if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
 						result.push(chars.next());
 						if (!$regexp(chars, result)) return false;
 					}
@@ -190,24 +189,45 @@ function $lineComment(chars, result, options, multiline = false) {
 		if (char === "\n") break;
 	}
 
-	while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
-	if (chars.peek() === "/" && chars.peek(2) === "/") {
-		chars.next();
-		comment.push(...$lineComment(chars, ["/"], options, true));
+	let content = comment.slice(2, comment.length - 1).replace(/\r$/, "");
+	const isProtected = content.startsWith("!");
+	const isSourcemap = sourcemapExpr.test(content);
+	const isSpdx = spdxExpr.test(content);
+
+	if (!isProtected & !isSourcemap && !isSpdx) {
+		while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
+
+		let lookahead = chars.peek(2);
+		if (lookahead === "//") {
+			let idx = 3;
+			while (!lookahead.endsWith("\n")) lookahead = chars.peek(idx++);
+			lookahead = lookahead.slice(2, lookahead.length - 1);
+
+			if (
+				!lookahead.startsWith("!") &&
+				!sourcemapExpr.test(lookahead) &&
+				!spdxExpr.test(lookahead)
+			) {
+				chars.next();
+				comment.push(...$lineComment(chars, ["/"], options, true));
+			}
+		}
+
+		if (multiline) return comment.toString();
+
+		content = comment
+			.slice(2, comment.length - 1)
+			.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
+			.replace(/\r$/, "");
 	}
 
-	if (multiline) return comment.toString();
-
-	const content = comment
-		.slice(2, comment.length - 1)
-		.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
-		.replace(/\r$/, "");
+	const isLicenseHeader = licenseHeaderExpr.test(content);
 	if (
 		line &&
-		(licenseHeader || !licenseHeaderExpr.test(content)) &&
-		(protect || !content.startsWith("!")) &&
-		(sourcemap || !sourcemapExpr.test(content)) &&
-		(spdx || !spdxExpr.test(content)) &&
+		(protect || !isProtected) &&
+		(sourcemap || !isSourcemap) &&
+		(spdx || !isSpdx) &&
+		(licenseHeader || !isLicenseHeader) &&
 		pattern.test(content)
 	) {
 		trimEnd(result);
@@ -396,10 +416,11 @@ class Scanner {
 	 * Preview the next element in the list without consuming it.
 	 *
 	 * @param {number} [n=1] How many characters to look ahead.
-	 * @returns {T} The (nth) next element.
+	 * @returns {T | undefined} The n next elements.
 	 */
 	peek(n = 1) {
-		return this.#list[this.#idx + (n - 1)];
+		if (this.isEmpty()) return undefined;
+		return this.#list.slice(this.#idx, this.#idx + n);
 	}
 
 	/**

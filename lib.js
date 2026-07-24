@@ -8,9 +8,9 @@ const any = /[^]?/;
  * @typedef Options
  * @property {RegExp} [pattern] The pattern of comments to strip.
  * @property {boolean} [block=true] Whether to strip block comments.
+ * @property {boolean} [jsdoc=true] Whether to strip JSDoc comments.
  * @property {boolean} [licenseHeader=false] Whether to strip license headers.
  * @property {boolean} [line=true] Whether to strip line comments.
- * @property {boolean} [jsdoc=true] Whether to strip JSDoc comments.
  * @property {boolean} [protected=true] Whether to strip protected comments.
  * @property {boolean} [sourcemap=true] Whether to strip sourcemap comments.
  * @property {boolean} [spdx=false] Whether to strip SPDX short-form identifiers.
@@ -28,11 +28,11 @@ export function stripComments(code, options) {
 	if (options instanceof RegExp) options = { pattern: options };
 
 	if (options === undefined) options = {};
-	options.pattern ??= any;
 	options.block ??= true;
 	options.jsdoc ??= true;
 	options.licenseHeader ??= false;
 	options.line ??= true;
+	options.pattern ??= any;
 	options.protected ??= true;
 	options.sourcemap ??= true;
 	options.spdx ??= false;
