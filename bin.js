@@ -18,17 +18,23 @@ const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
 let code = 0;
 
 debug("parsing CLI flags");
-let idx = files.indexOf("--help");
-const help = idx === -1 ? false : !!files.splice(idx, 1);
-
-idx = files.indexOf("--keep-block");
+let idx = files.indexOf("--keep-block");
 const block = idx === -1 ? undefined : !files.splice(idx, 1);
+
+idx = files.indexOf("--help");
+const help = idx === -1 ? false : !!files.splice(idx, 1);
 
 idx = files.indexOf("--keep-jsdoc");
 const jsdoc = idx === -1 ? undefined : !files.splice(idx, 1);
 
+idx = files.indexOf("--strip-license-header");
+const licenseHeader = idx === -1 ? undefined : !!files.splice(idx, 1);
+
 idx = files.indexOf("--keep-line");
 const line = idx === -1 ? undefined : !files.splice(idx, 1);
+
+idx = files.indexOf("--pattern");
+const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
 
 idx = files.indexOf("--keep-protected");
 const protect = idx === -1 ? undefined : !files.splice(idx, 1);
@@ -36,14 +42,8 @@ const protect = idx === -1 ? undefined : !files.splice(idx, 1);
 idx = files.indexOf("--keep-sourcemap");
 const sourcemap = idx === -1 ? undefined : !files.splice(idx, 1);
 
-idx = files.indexOf("--strip-license-header");
-const licenseHeader = idx === -1 ? undefined : !!files.splice(idx, 1);
-
 idx = files.indexOf("--strip-spdx");
 const spdx = idx === -1 ? undefined : !!files.splice(idx, 1);
-
-idx = files.indexOf("--pattern");
-const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
 
 idx = files.indexOf("--version");
 const version = idx === -1 ? undefined : !!files.splice(idx, 1);
