@@ -61,15 +61,21 @@ function $blockComment(chars, result, options) {
 		if (char === "*" && chars.peek() === "/") {
 			comment.push(chars.next());
 
-			const content = comment
-				.slice(2, comment.length - 2)
+			let content = comment.slice(2, comment.length - 2);
+			const isJsdoc = content.startsWith("*");
+			const isProtected = content.startsWith("!");
+
+			content = content
+				.replace(/^[!*]/, "")
 				.replaceAll(/(?<=^|[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
-				.replaceAll(/^[\t ]*(?![\t !*])|(?<![\t ])[\t ]*$/g, "");
+				.replaceAll(/^[\t ]*(?![\t ])|(?<![\t ])[\t ]*$/g, "");
+
+			const isLicenseHeader = licenseHeaderExpr.test(content);
 			if (
 				block &&
-				(jsdoc || !content.startsWith("*")) &&
-				(licenseHeader || !licenseHeaderExpr.test(content)) &&
-				(protect || !content.startsWith("!")) &&
+				(jsdoc || !isJsdoc) &&
+				(licenseHeader || !isLicenseHeader) &&
+				(protect || !isProtected) &&
 				pattern.test(content)
 			) {
 				trimEnd(result);
@@ -189,12 +195,12 @@ function $lineComment(chars, result, options, multiline = false) {
 		if (char === "\n") break;
 	}
 
-	let content = comment.slice(2, comment.length - 1).replace(/\r$/, "");
+	let content = comment.slice(2, comment.length - 1);
 	const isProtected = content.startsWith("!");
 	const isSourcemap = sourcemapExpr.test(content);
 	const isSpdx = spdxExpr.test(content);
 
-	if (!isProtected & !isSourcemap && !isSpdx) {
+	if (!isSourcemap && !isSpdx) {
 		while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
 
 		let lookahead = chars.peek(2);
@@ -204,7 +210,7 @@ function $lineComment(chars, result, options, multiline = false) {
 			lookahead = lookahead.slice(2, lookahead.length - 1);
 
 			if (
-				!lookahead.startsWith("!") &&
+				isProtected === lookahead.startsWith("!") &&
 				!sourcemapExpr.test(lookahead) &&
 				!spdxExpr.test(lookahead)
 			) {
@@ -213,13 +219,17 @@ function $lineComment(chars, result, options, multiline = false) {
 			}
 		}
 
-		if (multiline) return comment.toString();
-
-		content = comment
-			.slice(2, comment.length - 1)
-			.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
-			.replace(/\r$/, "");
+		if (multiline) {
+			return comment.toString();
+		} else {
+			content = comment.slice(2, comment.length - 1);
+		}
 	}
+
+	content = content
+		.replaceAll(/(^|\/\/)!/g, "$1")
+		.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
+		.replace(/\r$/, "");
 
 	const isLicenseHeader = licenseHeaderExpr.test(content);
 	if (
