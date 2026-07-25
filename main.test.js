@@ -120,8 +120,8 @@ test("pattern", async (t) => {
 			want: "var x = y;\n",
 		},
 		"pattern with end of string anchor, block comment": {
-			pattern: /bar\s*$/,
-			inp: "var x = y; /* foobar */\n",
+			pattern: /hello world!\s*$/,
+			inp: "var x = y; /* hello world! */\n",
 			want: "var x = y;\n",
 		},
 		"pattern with end of string anchor, line comment ending in CRLF": {
@@ -188,6 +188,21 @@ test("pattern", async (t) => {
 			pattern: /hello wor?ld/,
 			inp: "{\n  // hello\n  // wo\rld\n  1/2\n}",
 			want: "{\n  // hello\n  // wo\rld\n  1/2\n}",
+		},
+		"protected comment, block": {
+			pattern: /^\s*hello world!\s*$/,
+			inp: "/*! hello world! */",
+			want: "",
+		},
+		"protected comment, line": {
+			pattern: /^\s*hello world!\s*$/,
+			inp: "//! hello world!",
+			want: "",
+		},
+		"multiline protected line comment": {
+			pattern: /hello world/,
+			inp: "{\n  //! hello\n  //! world\n  var x = 'Hello world!';\n}",
+			want: "{\n  var x = 'Hello world!';\n}",
 		},
 	};
 
