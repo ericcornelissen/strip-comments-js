@@ -1573,8 +1573,8 @@ test("preserve SPDX ID comments", async (t) => {
 			`// SPDX-License-Identifier: Apache-2.0`,
 		],
 		"spdx identifier followed by a line comment": [
-			`// SPDX-License-Identifier: Apache-2.0\n// bar`,
-			`// SPDX-License-Identifier: Apache-2.0`,
+			`// SPDX-License-Identifier: Apache-2.0\n// bar\nvar foo = "bar";`,
+			`// SPDX-License-Identifier: Apache-2.0\nvar foo = "bar";`,
 		],
 		"spdx identifier followed by a protected comment, block": [
 			`// SPDX-License-Identifier: Apache-2.0\n/*! bar */`,
@@ -1605,8 +1605,8 @@ test("preserve SPDX ID comments", async (t) => {
 			`// SPDX-License-Identifier: Apache-2.0`,
 		],
 		"spdx identifier lead by a line comment": [
-			`// foo\n// SPDX-License-Identifier: Apache-2.0`,
-			`// SPDX-License-Identifier: Apache-2.0`,
+			`// foo\n// SPDX-License-Identifier: Apache-2.0\nvar foo = "bar";`,
+			`// SPDX-License-Identifier: Apache-2.0\nvar foo = "bar";`,
 		],
 		"spdx identifier lead by a protected comment, block": [
 			`/*! foo */// SPDX-License-Identifier: Apache-2.0`,

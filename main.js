@@ -42,7 +42,7 @@ export function strip(code, options) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @returns {boolean}
@@ -101,7 +101,7 @@ function $blockComment(chars, result, options) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @param {"{" | "(" | null} match
@@ -171,7 +171,7 @@ function $code(chars, result, options, match) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @param {boolean} [multiline]
@@ -207,7 +207,7 @@ function $lineComment(chars, result, options, multiline = false) {
 		if (lookahead === "//") {
 			let idx = 3;
 			while (!lookahead.endsWith("\n")) lookahead = chars.peek(idx++);
-			lookahead = lookahead.slice(2, lookahead.length - 1);
+			lookahead = lookahead.slice(2);
 
 			if (
 				isProtected === lookahead.startsWith("!") &&
@@ -258,7 +258,7 @@ function $lineComment(chars, result, options, multiline = false) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @returns {boolean}
  */
@@ -291,7 +291,7 @@ function $regexp(chars, result) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {"'" | '"'} quote
  * @returns {boolean}
@@ -316,7 +316,7 @@ function $string(chars, result, quote) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @returns {boolean}

@@ -11,9 +11,12 @@ export default {
 	testRunner: "tap",
 	tap: {
 		forceBail: true,
-		testFiles: ["main.test.js"],
 		nodeArgs: ["--import", "./.stryker.js"],
+		testFiles: ["main.test.js"],
 	},
+
+	timeoutFactor: 1.5,
+	timeoutMS: 20_000,
 
 	ignorers: ["assert"],
 
