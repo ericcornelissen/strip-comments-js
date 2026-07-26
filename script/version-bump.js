@@ -44,10 +44,11 @@ await writeFile(packageLockJson, JSON.stringify(lockfile, null, 2) + "\n");
 
 const manfile = await readFile(manDotOne, { encoding: "utf-8" });
 const lines = manfile.split("\n");
-const month = Temporal.Now.plainDateISO().toLocaleString("en-US", {
+const date = Temporal.Now.plainDateISO().toLocaleString("en-US", {
 	month: "long",
+	year: "numeric",
 });
-lines[0] = `.TH "strip-comments-js" "1" "${month} 2026" "v${manifest.version}" "User Commands"`;
+lines[0] = `.TH "strip-comments-js" "1" "${date}" "v${manifest.version}" "User Commands"`;
 await writeFile(manDotOne, lines.join("\n"));
 
 execSync("git commit --all --message 'version bump'");
