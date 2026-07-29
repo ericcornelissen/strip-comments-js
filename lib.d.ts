@@ -7,14 +7,14 @@ export type Options = {
 	/** Whether to strip block comments. */
 	block?: boolean;
 
+	/** Whether to strip JSDoc comments. */
+	jsdoc?: boolean;
+
 	/** Whether to strip license headers. */
 	licenseHeader?: boolean;
 
 	/** Whether to strip line comments. */
 	line?: boolean;
-
-	/** Whether to strip JSDoc comments. */
-	jsdoc?: boolean;
 
 	/** Whether to strip protected comments. */
 	protected?: boolean;

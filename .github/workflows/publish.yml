@@ -7,6 +7,28 @@ on:
 permissions: read-all
 
 jobs:
+  github:
+    name: GitHub
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # To create a GitHub Release
+    needs:
+      - npm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: true # To push version tag and major ref
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="v$(cat package.json | jq -r .version)"
+          gh release create "${VERSION}" \
+            --title "Release ${VERSION}" \
+            --notes "Release ${VERSION}" \
+            --verify-tag=true \
+            --latest=true
   npm:
     name: npm
     runs-on: ubuntu-24.04
@@ -21,7 +43,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           cache: npm
           node-version-file: .nvmrc
@@ -31,4 +53,4 @@ jobs:
       - name: Publish to npm
         run: |
           npm run package
-          npm publish || true
+          npm publish

@@ -42,7 +42,7 @@ export function strip(code, options) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @returns {boolean}
@@ -61,15 +61,21 @@ function $blockComment(chars, result, options) {
 		if (char === "*" && chars.peek() === "/") {
 			comment.push(chars.next());
 
-			const content = comment
-				.slice(2, comment.length - 2)
+			let content = comment.slice(2, comment.length - 2);
+			const isJsdoc = content.startsWith("*");
+			const isProtected = content.startsWith("!");
+
+			content = content
+				.replace(/^[!*]/, "")
 				.replaceAll(/(?<=^|[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
-				.replaceAll(/^[\t ]*(?![\t !*])|(?<![\t ])[\t ]*$/g, "");
+				.replaceAll(/^[\t ]*(?![\t ])|(?<![\t ])[\t ]*$/g, "");
+
+			const isLicenseHeader = licenseHeaderExpr.test(content);
 			if (
 				block &&
-				(jsdoc || !content.startsWith("*")) &&
-				(licenseHeader || !licenseHeaderExpr.test(content)) &&
-				(protect || !content.startsWith("!")) &&
+				(jsdoc || !isJsdoc) &&
+				(licenseHeader || !isLicenseHeader) &&
+				(protect || !isProtected) &&
 				pattern.test(content)
 			) {
 				trimEnd(result);
@@ -95,7 +101,7 @@ function $blockComment(chars, result, options) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @param {"{" | "(" | null} match
@@ -123,9 +129,8 @@ function $code(chars, result, options, match) {
 				if (/(?:^|[\s);}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
 
-					const next = chars.peek();
-					const nextnext = chars.peek(2);
-					if (next === "/" && nextnext !== "/" && nextnext !== "*") {
+					const next = chars.peek(2);
+					if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
 						result.push(chars.next());
 						if (!$regexp(chars, result)) return false;
 					}
@@ -166,7 +171,7 @@ function $code(chars, result, options, match) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @param {boolean} [multiline]
@@ -190,24 +195,49 @@ function $lineComment(chars, result, options, multiline = false) {
 		if (char === "\n") break;
 	}
 
-	while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
-	if (chars.peek() === "/" && chars.peek(2) === "/") {
-		chars.next();
-		comment.push(...$lineComment(chars, ["/"], options, true));
+	let content = comment.slice(2, comment.length - 1);
+	const isProtected = content.startsWith("!");
+	const isSourcemap = sourcemapExpr.test(content);
+	const isSpdx = spdxExpr.test(content);
+
+	if (!isSourcemap && !isSpdx) {
+		while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
+
+		let lookahead = chars.peek(2);
+		if (lookahead === "//") {
+			let idx = 3;
+			while (!lookahead.endsWith("\n")) lookahead = chars.peek(idx++);
+			lookahead = lookahead.slice(2);
+
+			if (
+				isProtected === lookahead.startsWith("!") &&
+				!sourcemapExpr.test(lookahead) &&
+				!spdxExpr.test(lookahead)
+			) {
+				chars.next();
+				comment.push(...$lineComment(chars, ["/"], options, true));
+			}
+		}
+
+		if (multiline) {
+			return comment.toString();
+		} else {
+			content = comment.slice(2, comment.length - 1);
+		}
 	}
 
-	if (multiline) return comment.toString();
-
-	const content = comment
-		.slice(2, comment.length - 1)
+	content = content
+		.replaceAll(/(^|\/\/)!/g, "$1")
 		.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
 		.replace(/\r$/, "");
+
+	const isLicenseHeader = licenseHeaderExpr.test(content);
 	if (
 		line &&
-		(licenseHeader || !licenseHeaderExpr.test(content)) &&
-		(protect || !content.startsWith("!")) &&
-		(sourcemap || !sourcemapExpr.test(content)) &&
-		(spdx || !spdxExpr.test(content)) &&
+		(licenseHeader || !isLicenseHeader) &&
+		(protect || !isProtected) &&
+		(sourcemap || !isSourcemap) &&
+		(spdx || !isSpdx) &&
 		pattern.test(content)
 	) {
 		trimEnd(result);
@@ -228,7 +258,7 @@ function $lineComment(chars, result, options, multiline = false) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @returns {boolean}
  */
@@ -261,7 +291,7 @@ function $regexp(chars, result) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {"'" | '"'} quote
  * @returns {boolean}
@@ -286,7 +316,7 @@ function $string(chars, result, quote) {
 }
 
 /**
- * @param {Scanner} chars
+ * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
  * @returns {boolean}
@@ -396,10 +426,11 @@ class Scanner {
 	 * Preview the next element in the list without consuming it.
 	 *
 	 * @param {number} [n=1] How many characters to look ahead.
-	 * @returns {T} The (nth) next element.
+	 * @returns {T | undefined} The next n elements.
 	 */
 	peek(n = 1) {
-		return this.#list[this.#idx + (n - 1)];
+		if (this.isEmpty()) return undefined;
+		return this.#list.slice(this.#idx, this.#idx + n);
 	}
 
 	/**
