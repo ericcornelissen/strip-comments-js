@@ -133,6 +133,12 @@ function $code(chars, result, options, match) {
 					if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
 						result.push(chars.next());
 						if (!$regexp(chars, result)) return false;
+
+						while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
+						const next = chars.peek(2);
+						if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
+							result.push(chars.next());
+						}
 					}
 				}
 
