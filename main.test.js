@@ -280,6 +280,7 @@ test("pathological input", async (t) => {
 			"control flow body line comment": ["if(x) // inc\n  x++", "if(x)\n  x++"],
 			"control body regexp, line comment": ["if (x) /a/ // b", "if (x) /a/"],
 			"control body regexp, block comment": ["if (x) /c/ /*d*/", "if (x) /c/"],
+			"control body regexp, tmp": ["{if (x) /a/} //", "{if (x) /a/}"],
 			"block followed by line comment": ["/* a */ // b", ""],
 			"line followed by block comment": ["// b\n/* a */", ""],
 		};

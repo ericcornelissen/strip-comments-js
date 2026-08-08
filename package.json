@@ -69,7 +69,7 @@
     "check": "npm-run-all check:*",
     "check:config": "node script/check-eslint-rules.js",
     "check:format": "npm run _prettier -- --check",
-    "check:js": "eslint --config .eslint.js '*.js'",
+    "check:js": "eslint --config .eslint.js \"*.js\"",
     "check:licenses": "licensee --errors-only",
     "clean": "git clean -fx .cache/ node_modules/ *.html && git restore testdata/",
     "dogfeed": "./bin.js *.js && npm run test",

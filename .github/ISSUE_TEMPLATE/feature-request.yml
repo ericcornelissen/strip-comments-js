@@ -25,17 +25,16 @@ body:
   - id: version
     type: textarea
     attributes:
-      label: Version information
+      label: Version
       description: |
-        Run `strip-comments-js --version` or `npm ls strip-comments-js` and
-        paste the result below.
+        Enter the output of `strip-comments-js --version`,
+        `npx strip-comments-js --version`, or `npm ls strip-comments-js`.
       placeholder: |
+        ex.
+        ```
         strip-comments-js : v1.2.0
         Node.js           : v26.4.0
-
-        OR
-
-        `-- strip-comments-js@1.2.0
+        ```
     validations:
       required: true
   - id: summary
@@ -43,7 +42,7 @@ body:
     attributes:
       label: Summary
       description: |
-        Provide a short description of the feature.
+        Provide a short description of the feature you want to see and why.
     validations:
       required: true
   - id: interface

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT-0
 
+import console from "node:console";
 import process from "node:process";
 
 const configModule = await import("../.eslint.js");
 const configArray = configModule.default;
 
 const all = new Set();
-const docs = new Map();
+const links = new Map();
 const configured = new Set();
 
 for (const config of configArray) {
@@ -18,9 +19,9 @@ for (const config of configArray) {
 				const ruleId = pluginName ? `${pluginName}/${ruleName}` : ruleName;
 				all.add(ruleId);
 
-				const documentation = rule?.meta?.docs?.url;
-				if (documentation) {
-					docs.set(ruleId, documentation);
+				const link = rule?.meta?.docs?.url;
+				if (link) {
+					links.set(ruleId, link);
 				}
 			}
 		}
@@ -35,12 +36,8 @@ const unconfigured = all.difference(configured);
 if (unconfigured.size > 0) {
 	for (const rule of unconfigured) {
 		const text = `'${rule}'`;
-		if (docs.has(rule)) {
-			const url = docs.get(rule);
-			console.log(`\u001B]8;;${url}\u001B\\${text}\u001B]8;;\u001B\\`);
-		} else {
-			console.log(text);
-		}
+		const link = links.has(rule) ? `(<${links.get(rule)}>)` : "";
+		console.log(text, link);
 	}
 	console.log("");
 	console.log(
