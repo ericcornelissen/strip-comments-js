@@ -278,6 +278,8 @@ test("pathological input", async (t) => {
 			"division, after delete": ["delete a.b; 3/14; // a", "delete a.b; 3/14;"],
 			"control flow body block comment": ["if (x) /* inc */ x++", "if (x) x++"],
 			"control flow body line comment": ["if(x) // inc\n  x++", "if(x)\n  x++"],
+			"control body regexp, line comment": ["if (x) /a/ // b", "if (x) /a/"],
+			"control body regexp, block comment": ["if (x) /c/ /*d*/", "if (x) /c/"],
 			"block followed by line comment": ["/* a */ // b", ""],
 			"line followed by block comment": ["// b\n/* a */", ""],
 		};
@@ -385,6 +387,8 @@ test("pathological input", async (t) => {
 				"for-of": "for (var x of%s) x",
 				"do-while body": "do%s; while (g)",
 				"else body": "if (a) { } else%s;",
+				"control flow body, dividend": "for (0; 0;) %s / 14",
+				"control flow body, divisor": "for (0; 0;) 3 / %s",
 				"await expression": "await%s;",
 				"delete expression": "delete%s;",
 				"in expression": "if (x in%s) f()",
