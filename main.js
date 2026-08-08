@@ -126,7 +126,7 @@ function $code(chars, result, options, match) {
 
 				if (!$code(chars, result, options, "(")) return false;
 
-				if (/(?:^|[\s);}])(?:do|for|if|while|with)\s*$/.test(code)) {
+				if (/(?:^|[\s);{}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
 
 					const next = chars.peek(2);
@@ -423,7 +423,7 @@ class Scanner {
 	}
 
 	/**
-	 * Consume the next element in the list.
+	 * Consume the next element.
 	 *
 	 * @returns {T} The next element.
 	 * @throws {Error} The scanner is finished when called.
@@ -435,12 +435,14 @@ class Scanner {
 	}
 
 	/**
-	 * Preview the next element in the list without consuming it.
+	 * Preview the next n elements
 	 *
 	 * @param {number} [n=1] How many characters to look ahead.
 	 * @returns {T | undefined} The next n elements.
+	 * @throws {Error} The requested number of elements is less than 1.
 	 */
 	peek(n = 1) {
+		assert(n > 0);
 		if (this.isEmpty()) return undefined;
 		return this.#list.slice(this.#idx, this.#idx + n);
 	}
