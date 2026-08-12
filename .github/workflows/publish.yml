@@ -50,7 +50,9 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: Install dependencies
         run: npm clean-install
-      - name: Publish to npm
+      - name: Prepare package
         run: |
           npm run package
-          npm publish
+          npm run test
+      - name: Publish to npm
+        run: npm publish
