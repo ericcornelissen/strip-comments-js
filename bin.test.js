@@ -12,7 +12,7 @@ test("regular usage", async (t) => {
 		await t.test(testcase.name, async () => {
 			spawnSync("./bin.js", [testcase.filepath, ...testcase.flags]);
 			const got = await fs.readFile(testcase.filepath, { encoding: "utf-8" });
-			assert.deepEqual(got, testcase.want);
+			assert.equal(got, testcase.want);
 		});
 	}
 });

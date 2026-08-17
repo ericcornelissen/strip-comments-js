@@ -8,9 +8,9 @@ body:
     attributes:
       label: Pre-check
       description: |
-        Before you submit your report, make sure the features has not already
-        been requested. Also check for closed feature requests, e.g. in case it
-        has been fixed in a new version.
+        Before you submit your request, make sure the features has not already
+        been requested. Also check for closed feature requests, for example in
+        case it has been added in a new version.
       options:
         - label: I have searched the existing issues
           required: true
