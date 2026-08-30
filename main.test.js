@@ -196,6 +196,11 @@ test("pattern", async (t) => {
 			inp: "{\n  //! hello\n  //! world\n  var x = 'Hello world!';\n}",
 			want: "{\n  var x = 'Hello world!';\n}",
 		},
+		"multiline protected line comment, CRLF": {
+			pattern: /hello world$/,
+			inp: "{\n  //! hello\r\n  //! world\n  var x = 'Hello world!';\n}",
+			want: "{\n  var x = 'Hello world!';\n}",
+		},
 	};
 
 	for (const [name, testcase] of Object.entries(testdata)) {
@@ -923,8 +928,8 @@ test("preserve license header comments", async (t) => {
 			`// Copyright (C) 2026  Henk`,
 		],
 		"license line header followed by a jsdoc comment": [
-			`//! Copyright (C) 2026  Henk\n/** bar */`,
-			`//! Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk\n/** bar */`,
+			`// Copyright (C) 2026  Henk`,
 		],
 		"license line header followed by a license header, block": [
 			`// Copyright (C) 2026  Henk\n/* Copyright (C) 2026  Henk */`,
@@ -1412,6 +1417,10 @@ test("preserve sourcemap comments", async (t) => {
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, ``],
+		"line comment containing a sourcemap comment": [
+			`// //# sourceMappingURL=foobar.js.map`,
+			``,
+		],
 		"protected comment, block": [`/*! foobar */`, ``],
 		"protected comment, line": [`//! foobar`, ``],
 		"sourcemap comment": [
@@ -1533,6 +1542,10 @@ test("preserve SPDX ID comments", async (t) => {
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, ``],
+		"line comment containing an spdx identifier": [
+			`// // SPDX-License-Identifier: Apache-2.0`,
+			``,
+		],
 		"protected comment, block": [`/*! foobar */`, ``],
 		"protected comment, line": [`//! foobar`, ``],
 		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
