@@ -21,6 +21,12 @@ const whitespaceExpr =
  */
 
 /**
+ * @typedef Hooks
+ * @property {(comment: string) => string} blockComment
+ * @property {(comment: string) => string} lineComment
+ */
+
+/**
  * Strip comments from a piece of code.
  *
  * @param {string} code The code to strip comments from.
@@ -32,10 +38,134 @@ export function strip(code, options) {
 	const { pattern } = options;
 	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");
 
+	const hooks = {
+		blockComment: onBlockComment(options),
+		lineComment: onLineComment(options),
+	};
+
+	return process(code, hooks);
+}
+
+/**
+ * @param {Options} options
+ * @returns {(comment: string) => string}
+ */
+function onBlockComment(options) {
+	const { block, jsdoc, licenseHeader, pattern, protected: protect } = options;
+
+	return (comment) => {
+		let content = comment.slice(2, comment.length - 2);
+
+		const isJsdoc = content.startsWith("*");
+		const isProtected = content.startsWith("!");
+
+		content = content
+			.replace(/^[!*]/, "")
+			.replaceAll(/(?<=^|[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
+			.replaceAll(/^[\t ]*(?![\t ])|(?<![\t ])[\t ]*$/g, "");
+
+		const isLicenseHeader = licenseHeaderExpr.test(content);
+		if (
+			block &&
+			(jsdoc || !isJsdoc) &&
+			(licenseHeader || !isLicenseHeader) &&
+			(protect || !isProtected) &&
+			pattern.test(content)
+		) {
+			return "";
+		} else {
+			return comment;
+		}
+	};
+}
+
+/**
+ * @param {Options} options
+ * @returns {(comment: string) => string}
+ */
+function onLineComment(options) {
+	const tDefault = 0,
+		tProtected = 1,
+		tSourcemap = 2,
+		tSpdx = 3;
+
+	const {
+		licenseHeader,
+		line,
+		pattern,
+		protected: protect,
+		sourcemap,
+		spdx,
+	} = options;
+
+	return (comment) => {
+		const lines = comment.split(/(\r?\n)/);
+		const segments = [];
+		let current = { value: "", type: tDefault };
+		for (const line of lines) {
+			if (line === "\n" || line === "\r\n") {
+				current.value += line;
+				continue;
+			}
+
+			const content = line.replaceAll(/^\s*\/\//g, "");
+
+			if (sourcemapExpr.test(content)) {
+				segments.push(current);
+				current = { value: line, type: tSourcemap };
+			} else if (spdxExpr.test(content)) {
+				segments.push(current);
+				current = { value: line, type: tSpdx };
+			} else if (content.startsWith("!")) {
+				if (current.type === tProtected) {
+					current.value += line;
+				} else {
+					segments.push(current);
+					current = { value: line, type: tProtected };
+				}
+			} else {
+				if (current.type === tDefault) {
+					current.value += line;
+				} else {
+					segments.push(current);
+					current = { value: line, type: tDefault };
+				}
+			}
+		}
+		segments.push(current);
+
+		let result = "";
+		for (const segment of segments) {
+			const content = segment.value
+				.replaceAll(/(^|\r?\n[^\n/]*)\/\/!?\s*/g, " ")
+				.replace(/\r?\n/, "");
+
+			if (!(
+				line &&
+				(licenseHeader || !licenseHeaderExpr.test(content)) &&
+				(protect || segment.type !== tProtected) &&
+				(sourcemap || segment.type !== tSourcemap) &&
+				(spdx || segment.type !== tSpdx) &&
+				pattern.test(content)
+			)) {
+				result += segment.value;
+			}
+		}
+
+		return result;
+	};
+}
+
+/**
+ * @param {string} code
+ * @param {Hooks} hooks
+ * @returns {boolean}
+ */
+function process(code, hooks) {
 	const result = new StringBuilder();
 	const chars = new Scanner(code + "\n");
 
-	if (!$code(chars, result, options, null)) return code;
+	if (!$code(chars, result, hooks, null)) return code;
 
 	result.shrink();
 	return result.toString();
@@ -44,12 +174,10 @@ export function strip(code, options) {
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
- * @param {Options} options
+ * @param {Hooks} hooks
  * @returns {boolean}
  */
-function $blockComment(chars, result, options) {
-	const { block, jsdoc, licenseHeader, pattern, protected: protect } = options;
-
+function $blockComment(chars, result, hooks) {
 	const comment = new StringBuilder();
 	comment.push(result.pop());
 	comment.push(chars.next());
@@ -61,23 +189,9 @@ function $blockComment(chars, result, options) {
 		if (char === "*" && chars.peek() === "/") {
 			comment.push(chars.next());
 
-			let content = comment.slice(2, comment.length - 2);
-			const isJsdoc = content.startsWith("*");
-			const isProtected = content.startsWith("!");
-
-			content = content
-				.replace(/^[!*]/, "")
-				.replaceAll(/(?<=^|[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
-				.replaceAll(/^[\t ]*(?![\t ])|(?<![\t ])[\t ]*$/g, "");
-
-			const isLicenseHeader = licenseHeaderExpr.test(content);
-			if (
-				block &&
-				(jsdoc || !isJsdoc) &&
-				(licenseHeader || !isLicenseHeader) &&
-				(protect || !isProtected) &&
-				pattern.test(content)
-			) {
+			const rawComment = comment.toString();
+			const outComment = hooks.blockComment(rawComment);
+			if (outComment.length === 0) {
 				trimEnd(result);
 
 				if (chars.peek() === "\n" || chars.peek(2) === "\r\n") {
@@ -90,7 +204,7 @@ function $blockComment(chars, result, options) {
 					}
 				}
 			} else {
-				result.push(...comment.chars());
+				result.push(...outComment);
 			}
 
 			return true;
@@ -103,18 +217,18 @@ function $blockComment(chars, result, options) {
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
- * @param {Options} options
+ * @param {Hooks} hooks
  * @param {"{" | "(" | null} match
  * @returns {boolean}
  */
-function $code(chars, result, options, match) {
+function $code(chars, result, hooks, match) {
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		result.push(char);
 
 		switch (char) {
 			case "{": {
-				if (!$code(chars, result, options, "{")) return false;
+				if (!$code(chars, result, hooks, "{")) return false;
 				break;
 			}
 			case "}": {
@@ -124,7 +238,7 @@ function $code(chars, result, options, match) {
 			case "(": {
 				const code = result.slice(0, -1);
 
-				if (!$code(chars, result, options, "(")) return false;
+				if (!$code(chars, result, hooks, "(")) return false;
 
 				if (/(?:^|[\s);{}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
@@ -154,16 +268,16 @@ function $code(chars, result, options, match) {
 				break;
 			}
 			case "`": {
-				if (!$template(chars, result, options)) return false;
+				if (!$template(chars, result, hooks)) return false;
 				break;
 			}
 
 			case "/": {
 				const next = chars.peek();
 				if (next === "/") {
-					$lineComment(chars, result, options);
+					$lineComment(chars, result, hooks);
 				} else if (next === "*") {
-					if (!$blockComment(chars, result, options)) return false;
+					if (!$blockComment(chars, result, hooks)) return false;
 				} else if (startExpression(result)) {
 					if (!$regexp(chars, result)) return false;
 
@@ -186,72 +300,32 @@ function $code(chars, result, options, match) {
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Options} options
- * @param {boolean} [multiline]
  */
-function $lineComment(chars, result, options, multiline = false) {
-	const {
-		line,
-		licenseHeader,
-		pattern,
-		protected: protect,
-		sourcemap,
-		spdx,
-	} = options;
-
+function $lineComment(chars, result, hooks) {
 	const comment = new StringBuilder();
 	comment.push(result.pop());
 
+	const whitespace = new StringBuilder();
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		comment.push(char);
-		if (char === "\n") break;
-	}
+		if (char === "\n") {
+			while (whitespaceExpr.test(chars.peek())) whitespace.push(chars.next());
 
-	let content = comment.slice(2, comment.length - 1);
-	const isProtected = content.startsWith("!");
-	const isSourcemap = sourcemapExpr.test(content);
-	const isSpdx = spdxExpr.test(content);
-
-	if (!isSourcemap && !isSpdx) {
-		while (whitespaceExpr.test(chars.peek())) comment.push(chars.next());
-
-		let lookahead = chars.peek(2);
-		if (lookahead === "//") {
-			let idx = 3;
-			while (!lookahead.endsWith("\n")) lookahead = chars.peek(idx++);
-			lookahead = lookahead.slice(2);
-
-			if (
-				isProtected === lookahead.startsWith("!") &&
-				!sourcemapExpr.test(lookahead) &&
-				!spdxExpr.test(lookahead)
-			) {
-				chars.next();
-				comment.push(...$lineComment(chars, ["/"], options, true));
+			if (chars.peek(2) === "//") {
+				if (!whitespace.isEmpty()) {
+					comment.push(...whitespace.chars());
+					whitespace.clear();
+				}
+			} else {
+				break;
 			}
 		}
-
-		if (multiline) {
-			return comment.toString();
-		} else {
-			content = comment.slice(2, comment.length - 1);
-		}
 	}
 
-	content = content
-		.replaceAll(/(^|\/\/)!/g, "$1")
-		.replaceAll(/\r?\n[^\n/]*\/\/\s*/g, " ")
-		.replace(/\r$/, "");
-
-	const isLicenseHeader = licenseHeaderExpr.test(content);
-	if (
-		line &&
-		(licenseHeader || !isLicenseHeader) &&
-		(protect || !isProtected) &&
-		(sourcemap || !isSourcemap) &&
-		(spdx || !isSpdx) &&
-		pattern.test(content)
-	) {
+	const rawComment = comment.toString();
+	const outComment = hooks.lineComment(rawComment);
+	if (outComment.length === 0) {
 		trimEnd(result);
 
 		if (result.last() === "\n") result.shrink();
@@ -261,12 +335,11 @@ function $lineComment(chars, result, options, multiline = false) {
 			if (chars.prev() === "\r") result.push("\r");
 			result.push("\n");
 		}
-
-		const trailing = comment.toString().split(/\r?\n/).at(-1);
-		if (trailing.length > 0) result.push(...trailing);
 	} else {
-		result.push(...comment.chars());
+		result.push(...outComment);
 	}
+
+	if (!whitespace.isEmpty()) result.push(...whitespace.chars());
 }
 
 /**
@@ -330,10 +403,10 @@ function $string(chars, result, quote) {
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
- * @param {Options} options
+ * @param {Hooks} hooks
  * @returns {boolean}
  */
-function $template(chars, result, options) {
+function $template(chars, result, hooks) {
 	while (chars.peek() !== undefined) {
 		const char = chars.next();
 		result.push(char);
@@ -346,7 +419,7 @@ function $template(chars, result, options) {
 			case "$": {
 				if (chars.peek() === "{") {
 					result.push(chars.next());
-					if (!$code(chars, result, options, "{")) return false;
+					if (!$code(chars, result, hooks, "{")) return false;
 				}
 				break;
 			}
@@ -487,6 +560,13 @@ class StringBuilder {
 	 */
 	chars() {
 		return this.#list;
+	}
+
+	/**
+	 * Reset the underlying string to the empty string.
+	 */
+	clear() {
+		this.#list.length = 0;
 	}
 
 	/**
