@@ -4,7 +4,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { argv, exit, stderr, versions } from "node:process";
-import { debuglog } from "node:util";
+import { debuglog, parseArgs } from "node:util";
 
 delete Object.prototype.__proto__;
 Object.freeze(Object.prototype);
@@ -14,55 +14,56 @@ Object.freeze(globalThis);
 const { stripComments } = await import("./lib.js");
 
 const debug = debuglog("strip-comments-js");
-const files = argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1);
 let code = 0;
 
 debug("parsing CLI flags");
-let idx = files.indexOf("--keep-block");
-const block = idx === -1 ? undefined : !files.splice(idx, 1);
+let error, files, options;
+try {
+	const { positionals, values } = parseArgs({
+		args: argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1),
+		options: {
+			help: { type: "boolean" },
+			"keep-block": { type: "boolean" },
+			"keep-jsdoc": { type: "boolean" },
+			"keep-line": { type: "boolean" },
+			"keep-protected": { type: "boolean" },
+			"keep-sourcemap": { type: "boolean" },
+			pattern: { type: "string" },
+			"strip-license-header": { type: "boolean" },
+			"strip-spdx": { type: "boolean" },
+			version: { type: "boolean" },
+		},
 
-idx = files.indexOf("--help");
-const help = idx === -1 ? false : !!files.splice(idx, 1);
+		strict: true,
+		allowPositionals: true,
+		allowNegative: false,
+		tokens: false,
+	});
 
-idx = files.indexOf("--keep-jsdoc");
-const jsdoc = idx === -1 ? undefined : !files.splice(idx, 1);
-
-idx = files.indexOf("--strip-license-header");
-const licenseHeader = idx === -1 ? undefined : !!files.splice(idx, 1);
-
-idx = files.indexOf("--keep-line");
-const line = idx === -1 ? undefined : !files.splice(idx, 1);
-
-idx = files.indexOf("--pattern");
-const pattern = idx === -1 ? undefined : new RegExp(files.splice(idx, 2)[1]);
-
-idx = files.indexOf("--keep-protected");
-const protect = idx === -1 ? undefined : !files.splice(idx, 1);
-
-idx = files.indexOf("--keep-sourcemap");
-const sourcemap = idx === -1 ? undefined : !files.splice(idx, 1);
-
-idx = files.indexOf("--strip-spdx");
-const spdx = idx === -1 ? undefined : !!files.splice(idx, 1);
-
-idx = files.indexOf("--version");
-const version = idx === -1 ? undefined : !!files.splice(idx, 1);
-
-const options = {
-	block,
-	help,
-	jsdoc,
-	licenseHeader,
-	line,
-	pattern,
-	protected: protect,
-	sourcemap,
-	spdx,
-	version,
-};
+	files = positionals;
+	options = {
+		block: !values["keep-block"],
+		help: values.help,
+		jsdoc: !values["keep-jsdoc"],
+		licenseHeader: values["strip-license-header"],
+		line: !values["keep-line"],
+		pattern: new RegExp(values.pattern),
+		protect: !values["keep-protected"],
+		sourcemap: !values["keep-sourcemap"],
+		spdx: values["strip-spdx"],
+		version: values.version,
+	};
+} catch (e) {
+	error = e;
+}
 debug("finished parsing CLI flags, got", options);
 
-if (help) {
+if (error) {
+	stderr.write(error.message + "\n");
+	exit(1);
+}
+
+if (options.help) {
 	console.log(`strip-comments-js [flag...] [file...]
 
 Summary:
@@ -85,7 +86,7 @@ https://github.com/ericcornelissen/strip-comments-js`);
 	exit(0);
 }
 
-if (version) {
+if (options.version) {
 	const manifest = await import("./package.json", { with: { type: "json" } });
 	console.log(`strip-comments-js : v${manifest.default.version}`);
 	console.log(`Node.js           : v${versions.node}`);

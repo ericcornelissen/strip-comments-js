@@ -28,3 +28,11 @@ test("auxiliary flags", async (t) => {
 		assert.equal(status, 0);
 	});
 });
+
+test("end of flags", () => {
+	const { status, stderr } = spawnSync("./bin.js", ["--", "--help"], {
+		encoding: "utf-8",
+	});
+	assert.equal(status, 1);
+	assert.equal(stderr, "ENOENT: no such file or directory, open '--help'\n");
+});
