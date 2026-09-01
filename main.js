@@ -2,7 +2,7 @@
 
 import assert from "node:assert";
 
-const licenseHeaderExpr = /(?:^|\s)Copyright \(C\) \d+(?:-\d+)?\s/;
+const licenseHeaderExpr = /^!?\s*Copyright \(C\) \d+(?:-\d+)?\s/;
 const spdxExpr = /^ SPDX-License-Identifier: [\-.0-9A-Za-z]+\s*$/;
 const sourcemapExpr = /^# sourceMappingURL=/;
 const whitespaceExpr =
@@ -58,19 +58,22 @@ function onBlockComment(options) {
 
 		const isJsdoc = content.startsWith("*");
 		const isProtected = content.startsWith("!");
+		const isLicenseHeader = licenseHeaderExpr.test(content);
 
 		content = content
 			.replace(/^[!*]/, "")
 			.replaceAll(/(?<=^|[^\t ])[\t ]*\n[\t ]*\*?[\t ]*/g, " ")
 			.replaceAll(/^[\t ]*(?![\t ])|(?<![\t ])[\t ]*$/g, "");
+		const matched = pattern.test(content);
 
-		const isLicenseHeader = licenseHeaderExpr.test(content);
 		if (
-			block &&
-			(jsdoc || !isJsdoc) &&
-			(licenseHeader || !isLicenseHeader) &&
-			(protect || !isProtected) &&
-			pattern.test(content)
+			(block &&
+				!isJsdoc &&
+				!isLicenseHeader &&
+				(protect || !isProtected) &&
+				matched) ||
+			(jsdoc && isJsdoc && matched) ||
+			(licenseHeader && isLicenseHeader && matched)
 		) {
 			return "";
 		} else {
@@ -85,6 +88,8 @@ function onBlockComment(options) {
  */
 function onLineComment(options) {
 	const tDefault = 0,
+		tLicenseHeader = 4,
+		tLicenseHeaderP = 5,
 		tProtected = 1,
 		tSourcemap = 2,
 		tSpdx = 3;
@@ -110,21 +115,27 @@ function onLineComment(options) {
 
 			const content = line.replaceAll(/^\s*\/\//g, "");
 
-			if (sourcemapExpr.test(content)) {
+			if (licenseHeaderExpr.test(content)) {
+				segments.push(current);
+				current = {
+					value: line,
+					type: content.startsWith("!") ? tLicenseHeaderP : tLicenseHeader,
+				};
+			} else if (sourcemapExpr.test(content)) {
 				segments.push(current);
 				current = { value: line, type: tSourcemap };
 			} else if (spdxExpr.test(content)) {
 				segments.push(current);
 				current = { value: line, type: tSpdx };
 			} else if (content.startsWith("!")) {
-				if (current.type === tProtected) {
+				if (current.type === tProtected || current.type === tLicenseHeaderP) {
 					current.value += line;
 				} else {
 					segments.push(current);
 					current = { value: line, type: tProtected };
 				}
 			} else {
-				if (current.type === tDefault) {
+				if (current.type === tDefault || current.type === tLicenseHeader) {
 					current.value += line;
 				} else {
 					segments.push(current);
@@ -139,14 +150,22 @@ function onLineComment(options) {
 			const content = segment.value
 				.replaceAll(/(^|\r?\n[^\n/]*)\/\/!?\s*/g, " ")
 				.replace(/\r?\n/, "");
+			const matched = pattern.test(content);
 
 			if (!(
-				line &&
-				(licenseHeader || !licenseHeaderExpr.test(content)) &&
-				(protect || segment.type !== tProtected) &&
-				(sourcemap || segment.type !== tSourcemap) &&
-				(spdx || segment.type !== tSpdx) &&
-				pattern.test(content)
+				(line &&
+					segment.type !== tLicenseHeader &&
+					segment.type !== tLicenseHeaderP &&
+					(protect || segment.type !== tProtected) &&
+					segment.type !== tSourcemap &&
+					segment.type !== tSpdx &&
+					matched) ||
+				(licenseHeader &&
+					(segment.type === tLicenseHeader ||
+						segment.type === tLicenseHeaderP) &&
+					matched) ||
+				(sourcemap && segment.type === tSourcemap && matched) ||
+				(spdx && segment.type === tSpdx && matched)
 			)) {
 				result += segment.value;
 			}

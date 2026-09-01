@@ -567,11 +567,11 @@ test("preserve block comments", async (t) => {
 		],
 		"block comment followed by a jsdoc comment": [
 			`/* foo *//** bar */`,
-			`/* foo *//** bar */`,
+			`/* foo */`,
 		],
 		"block comment followed by a license header, block": [
 			`/* foo *//* Copyright (C) 2026  Henk */`,
-			`/* foo *//* Copyright (C) 2026  Henk */`,
+			`/* foo */`,
 		],
 		"block comment followed by a license header, line": [
 			`/* foo */// Copyright (C) 2026  Henk`,
@@ -599,11 +599,11 @@ test("preserve block comments", async (t) => {
 		],
 		"block comment lead by a jsdoc comment": [
 			`/** foo *//* bar */`,
-			`/** foo *//* bar */`,
+			`/* bar */`,
 		],
 		"block comment lead by a license header, block": [
 			`/* Copyright (C) 2026  Henk *//* bar */`,
-			`/* Copyright (C) 2026  Henk *//* bar */`,
+			`/* bar */`,
 		],
 		"block comment lead by a license header, line": [
 			`// Copyright (C) 2026  Henk\n/* bar */`,
@@ -626,12 +626,11 @@ test("preserve block comments", async (t) => {
 			`// SPDX-License-Identifier: Apache-2.0\n/* bar */`,
 			`/* bar */`,
 		],
-		"jsdoc comment": [`/** foobar */`, `/** foobar */`],
-		"license header, block": [
-			`/* Copyright (C) 2026  Henk */`,
-			`/* Copyright (C) 2026  Henk */`,
-		],
+		"jsdoc comment": [`/** foobar */`, ``],
+		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"license header, line protected": [`//! Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, ``],
 		"protected comment, block": [`/*! foobar */`, `/*! foobar */`],
 		"protected comment, line": [`//! foobar`, ``],
@@ -764,7 +763,9 @@ test("preserve JSDoc comments", async (t) => {
 			`/** bar */`,
 		],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"license header, line protected": [`//! Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, ``],
 		"protected comment, block": [`/*! foobar */`, ``],
 		"protected comment, line": [`//! foobar`, ``],
@@ -823,6 +824,14 @@ test("preserve license header comments", async (t) => {
 			`/* Copyright (C) 2025  Kip\n *\n * This program is free software: ...*/`,
 			`/* Copyright (C) 2025  Kip\n *\n * This program is free software: ...*/`,
 		],
+		"license block header protected": [
+			`/*! Copyright (C) 2025  Kip */`,
+			`/*! Copyright (C) 2025  Kip */`,
+		],
+		"license block header, multiline protected": [
+			`/*! Copyright (C) 2025  Kip\n *\n * This program is free software: ...*/`,
+			`/*! Copyright (C) 2025  Kip\n *\n * This program is free software: ...*/`,
+		],
 		"license block header, not quite, prefix": [
 			`/* xCopyright (C) 2025-2026 */`,
 			``,
@@ -834,6 +843,14 @@ test("preserve license header comments", async (t) => {
 		"license block header, two in a row": [
 			`/* Copyright (C) 2025  Kip *//* Copyright (C) 2026  Henk */`,
 			`/* Copyright (C) 2025  Kip *//* Copyright (C) 2026  Henk */`,
+		],
+		"license block header, protected not-protected": [
+			`/*! Copyright (C) 2025  Kip *//* Copyright (C) 2026  Henk */`,
+			`/*! Copyright (C) 2025  Kip *//* Copyright (C) 2026  Henk */`,
+		],
+		"license block header, not-protected protected": [
+			`/* Copyright (C) 2025  Kip *//*! Copyright (C) 2026  Henk */`,
+			`/* Copyright (C) 2025  Kip *//*! Copyright (C) 2026  Henk */`,
 		],
 		"license block header, year range": [
 			`/* Copyright (C) 2025-2026  John */`,
@@ -907,9 +924,25 @@ test("preserve license header comments", async (t) => {
 			`// Copyright (C) 2026  Henk`,
 			`// Copyright (C) 2026  Henk`,
 		],
+		"license line header, protected": [
+			`//! Copyright (C) 2026  Henk`,
+			`//! Copyright (C) 2026  Henk`,
+		],
 		"license line header, multiline": [
 			`// Copyright (C) 2026  Henk\n//\n// This program is free software: ...`,
 			`// Copyright (C) 2026  Henk\n//\n// This program is free software: ...`,
+		],
+		"license line header, protected multiline": [
+			`//! Copyright (C) 2026  Henk\n//!\n//! This program is free software: ...`,
+			`//! Copyright (C) 2026  Henk\n//!\n//! This program is free software: ...`,
+		],
+		"license line header, no leading space": [
+			`//Copyright (C) 2026  Henk`,
+			`//Copyright (C) 2026  Henk`,
+		],
+		"license line header, extra leading spacing": [
+			`//   Copyright (C) 2026  Henk`,
+			`//   Copyright (C) 2026  Henk`,
 		],
 		"license line header, not quite, prefix": [
 			`// xCopyright (C) 2025-2026`,
@@ -969,7 +1002,7 @@ test("preserve license header comments", async (t) => {
 		],
 		"license line header lead by a line comment": [
 			`// foo\n// Copyright (C) 2026  Henk`,
-			`// foo\n// Copyright (C) 2026  Henk`,
+			`// Copyright (C) 2026  Henk`,
 		],
 		"license line header lead by a protected comment, block": [
 			`/*! foo */// Copyright (C) 2026  Henk`,
@@ -1035,10 +1068,9 @@ test("preserve line comments", async (t) => {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
-		"license header, line": [
-			`// Copyright (C) 2026  Henk`,
-			`// Copyright (C) 2026  Henk`,
-		],
+		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
+		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"license header, line protected": [`//! Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, `// foobar`],
 		"line comment, empty": [`//`, `//`],
 		"line comment, two in a row": [`// foo\n// bar`, `// foo\n// bar`],
@@ -1077,7 +1109,7 @@ test("preserve line comments", async (t) => {
 		],
 		"line comment followed by a license header, line": [
 			`// foo\n// Copyright (C) 2026  Henk`,
-			`// foo\n// Copyright (C) 2026  Henk`,
+			`// foo`,
 		],
 		"line comment followed by a protected comment, block": [
 			`// foo\n/*! bar */`,
@@ -1089,11 +1121,11 @@ test("preserve line comments", async (t) => {
 		],
 		"line comment followed by a sourcemap comment": [
 			`// foo\n//# sourceMappingURL=bar.js.map`,
-			`// foo\n//# sourceMappingURL=bar.js.map`,
+			`// foo`,
 		],
 		"line comment followed by a spdx identifier": [
 			`// foo\n// SPDX-License-Identifier: Apache-2.0`,
-			`// foo\n// SPDX-License-Identifier: Apache-2.0`,
+			`// foo`,
 		],
 		"line comment lead by a block comment": [`/* foo */// bar`, `// bar`],
 		"line comment lead by a jsdoc comment": [`/** foo */// bar`, `// bar`],
@@ -1103,7 +1135,7 @@ test("preserve line comments", async (t) => {
 		],
 		"line comment lead by a license header, line": [
 			`// Copyright (C) 2026  Henk\n// foo\n`,
-			`// Copyright (C) 2026  Henk\n// foo\n`,
+			``,
 		],
 		"line comment lead by a protected comment, block": [
 			`/*! foo */// bar`,
@@ -1115,22 +1147,16 @@ test("preserve line comments", async (t) => {
 		],
 		"line comment lead by a sourcemap comment": [
 			`//# sourceMappingURL=foobar.js.map\n// bar`,
-			`//# sourceMappingURL=foobar.js.map\n// bar`,
+			`// bar`,
 		],
 		"line comment lead by a spdx identifier": [
 			`// SPDX-License-Identifier: Apache-2.0\n// bar`,
-			`// SPDX-License-Identifier: Apache-2.0\n// bar`,
+			`// bar`,
 		],
 		"protected comment, block": [`/*! foobar */`, ``],
 		"protected comment, line": [`//! foobar`, `//! foobar`],
-		"sourcemap comment": [
-			`//# sourceMappingURL=foobar.js.map`,
-			`//# sourceMappingURL=foobar.js.map`,
-		],
-		"spdx identifier": [
-			`// SPDX-License-Identifier: Apache-2.0`,
-			`// SPDX-License-Identifier: Apache-2.0`,
-		],
+		"sourcemap comment": [`//# sourceMappingURL=foobar.js.map`, ``],
+		"spdx identifier": [`// SPDX-License-Identifier: Apache-2.0`, ``],
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
@@ -1168,7 +1194,9 @@ test("preserve protected comments", async (t) => {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"license header, line protected": [`//! Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, ``],
 		"protected block comment": [`/*! foobar */`, `/*! foobar */`],
 		"protected block comment, empty": [`/*!*/`, `/*!*/`],
@@ -1415,7 +1443,9 @@ test("preserve sourcemap comments", async (t) => {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"license header, line protected": [`//! Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, ``],
 		"line comment containing a sourcemap comment": [
 			`// //# sourceMappingURL=foobar.js.map`,
@@ -1540,7 +1570,9 @@ test("preserve SPDX ID comments", async (t) => {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
+		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
+		"license header, line protected": [`//! Copyright (C) 2026  Henk`, ``],
 		"line comment": [`// foobar`, ``],
 		"line comment containing an spdx identifier": [
 			`// // SPDX-License-Identifier: Apache-2.0`,
