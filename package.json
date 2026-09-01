@@ -51,6 +51,7 @@
   ],
   "devDependencies": {
     "@ericcornelissen/arbitrary-javascript": "0.3.0",
+    "@stryker-mutator/api": "10.0.0",
     "@stryker-mutator/core": "10.0.0",
     "@stryker-mutator/tap-runner": "10.0.0",
     "acorn": "8.18.0",

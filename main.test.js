@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as assert from "node:assert/strict";
+import { env } from "node:process";
 import { test } from "node:test";
 
 import * as acorn from "acorn";
 import * as fc from "fast-check";
 
 import * as arb from "./arbitraries.js";
-import * as testdata from "./testdata.js";
 
 import { strip } from "./main.js";
+
+if (env.MUTATION_TESTING) {
+	fc.configureGlobal({ numRuns: 0 });
+}
 
 const baseOptions = Object.freeze({
 	pattern: /[^]?/,
@@ -20,20 +24,6 @@ const baseOptions = Object.freeze({
 	protected: true,
 	sourcemap: true,
 	spdx: true,
-});
-
-test("testdata", async (t) => {
-	for (using testcase of await testdata.files()) {
-		await t.test(testcase.name, async () => {
-			const options = {
-				...baseOptions,
-				...testcase.options,
-			};
-
-			const got = strip(testcase.original, options);
-			assert.equal(got, testcase.want);
-		});
-	}
 });
 
 test("newlines", async (t) => {

@@ -1,5 +1,9 @@
 // Configuration file for StrykerJS (https://stryker-mutator.io/)
 
+import * as process from "node:process";
+
+process.env.MUTATION_TESTING = 1;
+
 export default {
 	coverageAnalysis: "perTest",
 	disableTypeChecks: false,
@@ -11,12 +15,11 @@ export default {
 	testRunner: "tap",
 	tap: {
 		forceBail: true,
-		nodeArgs: ["--import", "./.stryker.js"],
 		testFiles: ["main.test.js"],
 	},
 
 	timeoutFactor: 1.5,
-	timeoutMS: 20_000,
+	timeoutMS: 5_000,
 
 	ignorers: ["assert"],
 
@@ -37,8 +40,3 @@ export default {
 	tempDirName: "node_modules/.temp/stryker",
 	cleanTempDir: true,
 };
-
-// Use this file to configure fast-check when mutation testing to speed up the
-// process and increase consistency.
-import * as fc from "fast-check";
-fc.configureGlobal({ numRuns: 0 });
