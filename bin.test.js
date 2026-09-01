@@ -10,7 +10,7 @@ import * as testdata from "./testdata.js";
 test("regular usage", async (t) => {
 	for (using testcase of await testdata.files()) {
 		await t.test(testcase.name, async () => {
-			spawnSync("./bin.js", [testcase.filepath, ...testcase.flags]);
+			cli(testcase.filepath, ...testcase.flags);
 			const got = await fs.readFile(testcase.filepath, { encoding: "utf-8" });
 			assert.equal(got, testcase.want);
 		});
@@ -19,20 +19,22 @@ test("regular usage", async (t) => {
 
 test("auxiliary flags", async (t) => {
 	await t.test("--help", () => {
-		const { status } = spawnSync("./bin.js", ["--help"]);
+		const { status } = cli("--help");
 		assert.equal(status, 0);
 	});
 
 	await t.test("--version", () => {
-		const { status } = spawnSync("./bin.js", ["--version"]);
+		const { status } = cli("--version");
 		assert.equal(status, 0);
 	});
 });
 
 test("end of flags", () => {
-	const { status, stderr } = spawnSync("./bin.js", ["--", "--help"], {
-		encoding: "utf-8",
-	});
+	const { status, stderr } = cli("--", "--help");
 	assert.equal(status, 1);
 	assert.equal(stderr, "ENOENT: no such file or directory, open '--help'\n");
 });
+
+function cli(...args) {
+	return spawnSync("./bin.js", args, { encoding: "utf-8" });
+}
