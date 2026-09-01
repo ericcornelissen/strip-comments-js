@@ -80,12 +80,12 @@ function $blockComment(chars, result, options) {
 			) {
 				trimEnd(result);
 
-				if (chars.peek() === "\n") {
+				if (chars.peek() === "\n" || chars.peek(2) === "\r\n") {
 					if (result.last() === "\n") result.shrink();
 					if (result.last() === "\r") result.shrink();
 
 					if (result.isEmpty()) {
-						chars.next();
+						if (chars.next() === "\r") chars.next();
 						if (chars.isEmpty()) result.push("\n");
 					}
 				}
