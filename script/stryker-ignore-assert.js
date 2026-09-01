@@ -6,11 +6,12 @@ export const strykerPlugins = [
 	declareValuePlugin(PluginKind.Ignore, "assert", {
 		shouldIgnore(path) {
 			if (
-				path.isCallExpression() &&
-				path.node.callee.type === "Identifier" &&
-				path.node.callee.name === "assert"
+				path.isExpressionStatement() &&
+				path.node.expression.type === "CallExpression" &&
+				path.node.expression.callee.type === "Identifier" &&
+				path.node.expression.callee.name === "assert"
 			) {
-				return "Do not mutate assert() expressions";
+				return "Do not mutate debug assertions";
 			}
 		},
 	}),
