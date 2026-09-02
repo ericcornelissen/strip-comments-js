@@ -43,7 +43,11 @@ export function strip(code, options) {
 		lineComment: onLineComment(options),
 	};
 
-	return process(code, hooks);
+	try {
+		return process(code, hooks);
+	} catch {
+		return code;
+	}
 }
 
 /**
@@ -178,14 +182,12 @@ function onLineComment(options) {
 /**
  * @param {string} code
  * @param {Hooks} hooks
- * @returns {boolean}
+ * @returns {string}
  */
 function process(code, hooks) {
 	const result = new StringBuilder();
 	const chars = new Scanner(code + "\n");
-
-	if (!$code(chars, result, hooks, null)) return code;
-
+	$code(chars, result, hooks, null);
 	result.shrink();
 	return result.toString();
 }
@@ -194,7 +196,7 @@ function process(code, hooks) {
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Hooks} hooks
- * @returns {boolean}
+ * @throws
  */
 function $blockComment(chars, result, hooks) {
 	const comment = new StringBuilder();
@@ -226,11 +228,11 @@ function $blockComment(chars, result, hooks) {
 				result.push(...outComment);
 			}
 
-			return true;
+			return;
 		}
 	}
 
-	return false;
+	throw new Error("unclosed block");
 }
 
 /**
@@ -238,7 +240,7 @@ function $blockComment(chars, result, hooks) {
  * @param {StringBuilder} result
  * @param {Hooks} hooks
  * @param {"{" | "(" | null} match
- * @returns {boolean}
+ * @throws
  */
 function $code(chars, result, hooks, match) {
 	let char;
@@ -247,25 +249,28 @@ function $code(chars, result, hooks, match) {
 
 		switch (char) {
 			case "{": {
-				if (!$code(chars, result, hooks, "{")) return false;
+				$code(chars, result, hooks, "{");
 				break;
 			}
 			case "}": {
-				return match === "{";
+				if (match !== "{") {
+					throw new Error(`unmatched '}' (expected '${match}')`);
+				}
+
+				return;
 			}
 
 			case "(": {
 				const code = result.slice(0, -1);
 
-				if (!$code(chars, result, hooks, "(")) return false;
-
+				$code(chars, result, hooks, "(");
 				if (/(?:^|[\s);{}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					$whitespace(chars, result);
 
 					const next = chars.peek(2);
 					if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
 						result.push(chars.next());
-						if (!$regexp(chars, result)) return false;
+						$regexp(chars, result);
 
 						$whitespace(chars, result);
 						const next = chars.peek(2);
@@ -278,16 +283,20 @@ function $code(chars, result, hooks, match) {
 				break;
 			}
 			case ")": {
-				return match === "(";
+				if (match !== "(") {
+					throw new Error(`unmatched ')' (expected '${match}')`);
+				}
+
+				return;
 			}
 
 			case "'":
 			case '"': {
-				if (!$string(chars, result, char)) return false;
+				$string(chars, result, char);
 				break;
 			}
 			case "`": {
-				if (!$template(chars, result, hooks)) return false;
+				$template(chars, result, hooks);
 				break;
 			}
 
@@ -296,9 +305,9 @@ function $code(chars, result, hooks, match) {
 				if (next === "/") {
 					$lineComment(chars, result, hooks);
 				} else if (next === "*") {
-					if (!$blockComment(chars, result, hooks)) return false;
+					$blockComment(chars, result, hooks);
 				} else if (startExpression(result)) {
-					if (!$regexp(chars, result)) return false;
+					$regexp(chars, result);
 
 					$whitespace(chars, result);
 					const next = chars.peek(2);
@@ -312,7 +321,9 @@ function $code(chars, result, hooks, match) {
 		}
 	}
 
-	return match === null;
+	if (match !== null) {
+		throw new Error(`unmatched '${match}'`);
+	}
 }
 
 /**
@@ -364,7 +375,7 @@ function $lineComment(chars, result, hooks) {
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
- * @returns {boolean}
+ * @throws
  */
 function $regexp(chars, result) {
 	let inCharRange = false;
@@ -386,19 +397,19 @@ function $regexp(chars, result) {
 				break;
 			}
 			case "/": {
-				if (!inCharRange) return true;
+				if (!inCharRange) return;
 			}
 		}
 	}
 
-	return false;
+	throw new Error("unclosed regular expression literal");
 }
 
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {"'" | '"'} quote
- * @returns {boolean}
+ * @throws
  */
 function $string(chars, result, quote) {
 	let char;
@@ -411,19 +422,19 @@ function $string(chars, result, quote) {
 				break;
 			}
 			case quote: {
-				return true;
+				return;
 			}
 		}
 	}
 
-	return false;
+	throw new Error("unclosed string literal");
 }
 
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Hooks} hooks
- * @returns {boolean}
+ * @throws
  */
 function $template(chars, result, hooks) {
 	let char;
@@ -438,17 +449,17 @@ function $template(chars, result, hooks) {
 			case "$": {
 				if (chars.peek() === "{") {
 					result.push(chars.next());
-					if (!$code(chars, result, hooks, "{")) return false;
+					$code(chars, result, hooks, "{");
 				}
 				break;
 			}
 			case "`": {
-				return true;
+				return;
 			}
 		}
 	}
 
-	return false;
+	throw new Error("unclosed template literal");
 }
 
 /**
