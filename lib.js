@@ -37,5 +37,9 @@ export function stripComments(code, options) {
 	options.sourcemap ??= true;
 	options.spdx ??= false;
 
-	return strip(code, options);
+	try {
+		return strip(code, options);
+	} catch {
+		return code;
+	}
 }

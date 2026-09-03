@@ -43,11 +43,7 @@ export function strip(code, options) {
 		lineComment: onLineComment(options),
 	};
 
-	try {
-		return process(code, hooks);
-	} catch {
-		return code;
-	}
+	return process(code, hooks);
 }
 
 /**
@@ -232,7 +228,7 @@ function $blockComment(chars, result, hooks) {
 		}
 	}
 
-	throw new Error("unclosed block");
+	throw new Error("unclosed block comment");
 }
 
 /**
@@ -254,7 +250,7 @@ function $code(chars, result, hooks, match) {
 			}
 			case "}": {
 				if (match !== "{") {
-					throw new Error(`unmatched '}' (expected '${match}')`);
+					throw new Error(`unmatched '}'`);
 				}
 
 				return;
@@ -284,7 +280,7 @@ function $code(chars, result, hooks, match) {
 			}
 			case ")": {
 				if (match !== "(") {
-					throw new Error(`unmatched ')' (expected '${match}')`);
+					throw new Error(`unmatched ')'`);
 				}
 
 				return;
