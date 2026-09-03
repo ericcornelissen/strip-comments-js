@@ -509,27 +509,83 @@ suite("invalid source code", () => {
 	const options = baseOptions;
 
 	const testdata = {
-		"unclosed block statement": "/*invalid*/ function foo() { var bar = 42;",
-		"unclosed argument list": "/*invalid*/ function foo( { var bar = 42; }",
-		"unclosed object literal": "/*invalid*/ var foo = { bar: 42",
-		"unclosed string, single quote": "/*invalid*/ var foo = 'bar",
-		"unclosed string, double quote": '/*invalid*/ var foo = "bar',
-		"unclosed string, backticks": "/*invalid*/ var foo = `bar",
-		"unclosed template literal expression": "/*invalid*/ var foo = `${bar`",
-		"unclosed block comment": "/*invalid*/ var foo = 'bar'; /*",
-		"unclosed regex": "/*invalid*/ var foo = /bar",
-		"unclosed regex as control flow body": "/*invalid*/ while (foo) /bar",
-		"unmatched '{'": "{var foo = 'bar' /*invalid*/",
-		"unmatched '}'": "var foo = 'bar'} /*invalid*/",
-		"unmatched '('": "function foo( { var bar = 42; } /*invalid*/",
-		"unmatched ')'": "function foo) { var bar = 42; } /*invalid*/",
-		"unbalanced brackets, '{'-')'": "{ let foo = 42 ) /*invalid*/",
-		"unbalanced brackets, '('-'}'": "( let bar = 42 } /*invalid*/",
+		"unclosed block statement": {
+			code: "/*invalid*/ function foo() { var bar = 42;",
+			message: "unmatched '{'",
+		},
+		"unclosed argument list": {
+			code: "/*invalid*/ function foo( { var bar = 42; }",
+			message: "unmatched '('",
+		},
+		"unclosed object literal": {
+			code: "/*invalid*/ var foo = { bar: 42",
+			message: "unmatched '{'",
+		},
+		"unclosed string, single quote": {
+			code: "/*invalid*/ var foo = 'bar",
+			message: "unclosed string literal",
+		},
+		"unclosed string, double quote": {
+			code: '/*invalid*/ var foo = "bar',
+			message: "unclosed string literal",
+		},
+		"unclosed string, backticks": {
+			code: "/*invalid*/ var foo = `bar",
+			message: "unclosed template literal",
+		},
+		"unclosed template literal expression": {
+			code: "/*invalid*/ var foo = `${bar`",
+			message: "unclosed template literal",
+		},
+		"unclosed block comment": {
+			code: "/*invalid*/ var foo = 'bar'; /*",
+			message: "unclosed block comment",
+		},
+		"unclosed regex": {
+			code: "/*invalid*/ var foo = /bar",
+			message: "unclosed regular expression literal",
+		},
+		"unclosed regex as control flow body": {
+			code: "/*invalid*/ while (foo) /bar",
+			message: "unclosed regular expression literal",
+		},
+		"unmatched '{'": {
+			code: "{var foo = 'bar' /*invalid*/",
+			message: "unmatched '{'",
+		},
+		"unmatched '}'": {
+			code: "var foo = 'bar'} /*invalid*/",
+			message: "unmatched '}'",
+		},
+		"unmatched '('": {
+			code: "if (foo { var bar = 42; } /*invalid*/",
+			message: "unmatched '('",
+		},
+		"unmatched ')'": {
+			code: "if foo) { var bar = 42; } /*invalid*/",
+			message: "unmatched ')'",
+		},
+		"unbalanced brackets, '{'-')'": {
+			code: "{ let foo = 42 ) /*invalid*/",
+			message: "unmatched ')'",
+		},
+		"unbalanced brackets, '('-'}'": {
+			code: "( let bar = 42 } /*invalid*/",
+			message: "unmatched '}'",
+		},
 	};
 
-	for (const [name, inp] of Object.entries(testdata)) {
+	for (const [name, { code, message }] of Object.entries(testdata)) {
 		test(name, () => {
-			assert.equal(strip(inp, options), inp);
+			assert.throws(
+				() => {
+					strip(code, options);
+				},
+				{
+					name: "Error",
+					message,
+				},
+			);
 		});
 	}
 });
