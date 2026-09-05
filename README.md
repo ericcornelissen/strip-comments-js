@@ -50,6 +50,8 @@ stripComments("var unicorns = false; // Only horses", { line: false });
 
 `stripComments(code, [options])`
 
+- `atlicense`: Whether to strip JSDoc license comments (JSDoc comments with a
+  `@license` tag).
 - `pattern`: The pattern of comments to strip. By default all comments are
   stripped.
 - `licenseHeader`: Whether to strip license headers (comments containing

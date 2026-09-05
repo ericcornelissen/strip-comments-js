@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export type Options = {
+	/** Whether to strip JSDoc license comments. */
+	atlicense?: boolean;
+
 	/** Whether to strip block comments. */
 	block?: boolean;
 

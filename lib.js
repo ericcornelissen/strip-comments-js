@@ -6,6 +6,7 @@ const any = /[^]?/;
 
 /**
  * @typedef Options
+ * @property {boolean} [atlicense=false] Whether to strip JSDoc license comments.
  * @property {boolean} [block=true] Whether to strip block comments.
  * @property {boolean} [error=false] Whether to error or return invalid code unchanged.
  * @property {boolean} [jsdoc=true] Whether to strip JSDoc comments.
@@ -29,6 +30,7 @@ export function stripComments(code, options) {
 	if (options instanceof RegExp) options = { pattern: options };
 
 	if (options === undefined) options = {};
+	options.atlicense ??= false;
 	options.block ??= true;
 	options.error ??= false;
 	options.jsdoc ??= true;
