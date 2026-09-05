@@ -7,8 +7,8 @@ const configModule = await import("../.eslint.js");
 const configArray = configModule.default;
 
 const all = new Set();
-const links = new Map();
 const configured = new Set();
+const links = new Map();
 
 for (const config of configArray) {
 	for (const pluginName in config.plugins) {

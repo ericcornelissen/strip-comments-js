@@ -17,7 +17,7 @@ const debug = debuglog("strip-comments-js");
 let code = 0;
 
 debug("parsing CLI flags");
-let error, files, options;
+let files, options;
 try {
 	const { positionals, values } = parseArgs({
 		args: argv[0].endsWith("node") ? argv.slice(2) : argv.slice(1),
@@ -54,15 +54,11 @@ try {
 		spdx: values["strip-spdx"],
 		version: values.version,
 	};
-} catch (e) {
-	error = e;
-}
-debug("finished parsing CLI flags, got", options);
-
-if (error) {
+} catch (error) {
 	stderr.write(error.message + "\n");
 	exit(1);
 }
+debug("finished parsing CLI flags, got", options);
 
 if (options.help) {
 	console.log(`strip-comments-js [flag...] [file...]

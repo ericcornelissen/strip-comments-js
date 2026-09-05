@@ -75,7 +75,6 @@
     "clean": "git clean -fx .cache/ node_modules/ *.html && git restore testdata/",
     "dogfeed": "./bin.js *.js && npm run test",
     "format": "npm run _prettier -- --write",
-    "man": "man ./man.1",
     "package": "strip-assertions ./*.js && ./bin.js --keep-jsdoc lib.d.ts lib.js && ./bin.js bin.js main.js",
     "test": "npm-run-all test:*",
     "test:bin": "node --test 'bin.test.js'",
