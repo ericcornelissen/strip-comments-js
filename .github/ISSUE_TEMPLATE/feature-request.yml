@@ -8,11 +8,11 @@ body:
     attributes:
       label: Pre-check
       description: |
-        Before you submit your request, make sure the features has not already
+        Before you submit your request, make sure the feature has not already
         been requested. Also check for closed feature requests, for example in
         case it has been added in a new version.
       options:
-        - label: I have searched the existing issues
+        - label: I have searched for existing feature requests
           required: true
   - id: related
     type: textarea
