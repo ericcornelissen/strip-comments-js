@@ -260,7 +260,7 @@ function $code(chars, result, hooks, match) {
 				const code = result.slice(0, -1);
 
 				$code(chars, result, hooks, "(");
-				if (/(?:^|[\s);{}])(?:do|for|if|while|with)\s*$/.test(code)) {
+				if (/(?:^|\*\/|[\s);{}])(?:do|for|if|while|with)\s*$/.test(code)) {
 					$whitespace(chars, result);
 
 					const next = chars.peek(2);

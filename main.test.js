@@ -426,7 +426,7 @@ suite("pathological input", () => {
 		});
 
 		suite("after preserved comment", () => {
-			const expressions = ["/'/", "delete /'/"];
+			const expressions = ["/'/", "delete /'/", "while (g) /'/"];
 
 			suite("block", () => {
 				const options = {
