@@ -201,8 +201,8 @@ function $blockComment(chars, result, hooks) {
 	comment.push(result.pop());
 	comment.push(chars.next());
 
-	while (chars.peek() !== undefined) {
-		const char = chars.next();
+	let char;
+	while ((char = chars.next()) !== null) {
 		comment.push(char);
 
 		if (char === "*" && chars.peek() === "/") {
@@ -241,8 +241,8 @@ function $blockComment(chars, result, hooks) {
  * @returns {boolean}
  */
 function $code(chars, result, hooks, match) {
-	while (chars.peek() !== undefined) {
-		const char = chars.next();
+	let char;
+	while ((char = chars.next()) !== null) {
 		result.push(char);
 
 		switch (char) {
@@ -260,14 +260,14 @@ function $code(chars, result, hooks, match) {
 				if (!$code(chars, result, hooks, "(")) return false;
 
 				if (/(?:^|[\s);{}])(?:do|for|if|while|with)\s*$/.test(code)) {
-					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
+					$whitespace(chars, result);
 
 					const next = chars.peek(2);
 					if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
 						result.push(chars.next());
 						if (!$regexp(chars, result)) return false;
 
-						while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
+						$whitespace(chars, result);
 						const next = chars.peek(2);
 						if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
 							result.push(chars.next());
@@ -300,7 +300,7 @@ function $code(chars, result, hooks, match) {
 				} else if (startExpression(result)) {
 					if (!$regexp(chars, result)) return false;
 
-					while (whitespaceExpr.test(chars.peek())) result.push(chars.next());
+					$whitespace(chars, result);
 					const next = chars.peek(2);
 					if (next[0] === "/" && next[1] !== "/" && next[1] !== "*") {
 						result.push(chars.next());
@@ -325,11 +325,11 @@ function $lineComment(chars, result, hooks) {
 	comment.push(result.pop());
 
 	const whitespace = new StringBuilder();
-	while (chars.peek() !== undefined) {
-		const char = chars.next();
+	let char;
+	while ((char = chars.next()) !== null) {
 		comment.push(char);
 		if (char === "\n") {
-			while (whitespaceExpr.test(chars.peek())) whitespace.push(chars.next());
+			$whitespace(chars, whitespace);
 
 			if (chars.peek(2) === "//") {
 				if (!whitespace.isEmpty()) {
@@ -368,8 +368,8 @@ function $lineComment(chars, result, hooks) {
  */
 function $regexp(chars, result) {
 	let inCharRange = false;
-	while (chars.peek() !== undefined) {
-		const char = chars.next();
+	let char;
+	while ((char = chars.next()) !== null) {
 		result.push(char);
 
 		switch (char) {
@@ -401,8 +401,8 @@ function $regexp(chars, result) {
  * @returns {boolean}
  */
 function $string(chars, result, quote) {
-	while (chars.peek() !== undefined) {
-		const char = chars.next();
+	let char;
+	while ((char = chars.next()) !== null) {
 		result.push(char);
 
 		switch (char) {
@@ -426,8 +426,8 @@ function $string(chars, result, quote) {
  * @returns {boolean}
  */
 function $template(chars, result, hooks) {
-	while (chars.peek() !== undefined) {
-		const char = chars.next();
+	let char;
+	while ((char = chars.next()) !== null) {
 		result.push(char);
 
 		switch (char) {
@@ -449,6 +449,24 @@ function $template(chars, result, hooks) {
 	}
 
 	return false;
+}
+
+/**
+ * @param {Scanner<string>} chars
+ * @param {StringBuilder} result
+ * @returns {string | null}
+ */
+function $whitespace(chars, result) {
+	let char;
+	while ((char = chars.next()) !== null) {
+		if (whitespaceExpr.test(char)) {
+			result.push(char);
+		} else {
+			break;
+		}
+	}
+
+	chars.undo();
 }
 
 /**
@@ -517,25 +535,22 @@ class Scanner {
 	/**
 	 * Consume the next element.
 	 *
-	 * @returns {T} The next element.
-	 * @throws {Error} The scanner is finished when called.
+	 * @returns {T | null} The next element, or null if the scanner finished.
 	 */
 	next() {
 		const idx = this.#idx++;
-		assert(idx < this.#list.length);
-		return this.#list[idx];
+		return this.#list[idx] || null;
 	}
 
 	/**
 	 * Preview the next n elements
 	 *
 	 * @param {number} [n=1] How many characters to look ahead.
-	 * @returns {T | undefined} The next n elements.
+	 * @returns {T} The next (up-to) n elements.
 	 * @throws {Error} The requested number of elements is less than 1.
 	 */
 	peek(n = 1) {
 		assert(n > 0);
-		if (this.isEmpty()) return undefined;
 		return this.#list.slice(this.#idx, this.#idx + n);
 	}
 
@@ -543,12 +558,22 @@ class Scanner {
 	 * Inspect the previous element in the list.
 	 *
 	 * @returns {T} The previous element.
-	 * @throws {Error} The scanner hasn't started yet when called.
+	 * @throws {Error} The current scanner position is 0.
 	 */
 	prev() {
 		const idx = this.#idx - 2;
 		assert(idx >= 0);
 		return this.#list[idx];
+	}
+
+	/**
+	 * Undo the last call of next.
+	 *
+	 * @throws {Error} The current scanner position is 0.
+	 */
+	undo() {
+		assert(this.#idx > 0);
+		this.#idx -= 1;
 	}
 }
 
