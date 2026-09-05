@@ -29,6 +29,7 @@ try {
 			"keep-protected": { type: "boolean" },
 			"keep-sourcemap": { type: "boolean" },
 			pattern: { type: "string" },
+			"strip-jsdoc-license": { type: "boolean" },
 			"strip-license-header": { type: "boolean" },
 			"strip-spdx": { type: "boolean" },
 			version: { type: "boolean" },
@@ -42,6 +43,7 @@ try {
 
 	files = positionals;
 	options = {
+		atlicense: values["strip-jsdoc-license"],
 		block: !values["keep-block"],
 		error: true,
 		help: values.help,
@@ -74,6 +76,7 @@ Flags:
   --keep-protected         Don't strip protected comments.
   --keep-sourcemap         Don't strip sourcemap comments.
   --pattern <pattern>      A regular expression of comments to strip.
+  --strip-jsdoc-license    Do strip JSDoc license comments.
   --strip-license-header   Do strip license headers.
   --strip-spdx             Do strip SPDX short-form identifiers.
   --version                Output version information.
