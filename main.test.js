@@ -8,6 +8,7 @@ import * as acorn from "acorn";
 import * as fc from "fast-check";
 
 import * as arb from "./arbitraries.js";
+import * as testdata from "./testdata.js";
 
 import { strip } from "./main.js";
 
@@ -24,6 +25,20 @@ const baseOptions = Object.freeze({
 	protected: true,
 	sourcemap: true,
 	spdx: true,
+});
+
+suite("testdata", async () => {
+	for (using testcase of await testdata.files()) {
+		test(testcase.name, () => {
+			const options = {
+				...baseOptions,
+				...testcase.options,
+			};
+
+			const got = strip(testcase.original, options);
+			assert.equal(got, testcase.want);
+		});
+	}
 });
 
 suite("newlines", () => {

@@ -10,11 +10,11 @@ const whitespaceExpr =
 
 /**
  * @typedef Options
- * @property {RegExp} pattern
  * @property {boolean} block
  * @property {boolean} licenseHeader
  * @property {boolean} line
  * @property {boolean} jsdoc
+ * @property {RegExp} pattern
  * @property {boolean} protected
  * @property {boolean} sourcemap
  * @property {boolean} spdx

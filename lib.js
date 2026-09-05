@@ -7,6 +7,7 @@ const any = /[^]?/;
 /**
  * @typedef Options
  * @property {boolean} [block=true] Whether to strip block comments.
+ * @property {boolean} [error=false] Whether to error or return invalid code unchanged.
  * @property {boolean} [jsdoc=true] Whether to strip JSDoc comments.
  * @property {boolean} [licenseHeader=false] Whether to strip license headers.
  * @property {boolean} [line=true] Whether to strip line comments.
@@ -29,6 +30,7 @@ export function stripComments(code, options) {
 
 	if (options === undefined) options = {};
 	options.block ??= true;
+	options.error ??= false;
 	options.jsdoc ??= true;
 	options.licenseHeader ??= false;
 	options.line ??= true;
@@ -39,7 +41,11 @@ export function stripComments(code, options) {
 
 	try {
 		return strip(code, options);
-	} catch {
-		return code;
+	} catch (error) {
+		if (options.error) {
+			throw error;
+		} else {
+			return code;
+		}
 	}
 }

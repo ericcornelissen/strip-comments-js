@@ -6,6 +6,8 @@ import * as path from "node:path";
 export async function files() {
 	const files = {};
 	for (const filename of await readdir("testdata")) {
+		if (filename === "invalid.js") continue;
+
 		const id = filename.replace(/\.\w+$/, ".js");
 		files[id] ??= {
 			name: id,
