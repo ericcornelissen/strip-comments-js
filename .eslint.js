@@ -110,7 +110,13 @@ export default defineConfig([
 			"test/consistent-modifier-style": ["error"],
 			"test/consistent-test-context-name": ["error"],
 			"test/consistent-test-filename": ["error"],
-			"test/consistent-test-it": ["error"],
+			"test/consistent-test-it": [
+				"error",
+				{
+					fn: "test",
+					withinDescribe: "test",
+				},
+			],
 			"test/hooks-order": ["error"],
 			"test/max-assertions": ["error"],
 			"test/max-nested-describe": ["error"],

@@ -2,7 +2,7 @@
 
 import * as assert from "node:assert/strict";
 import { env } from "node:process";
-import { test } from "node:test";
+import { suite, test } from "node:test";
 
 import * as acorn from "acorn";
 import * as fc from "fast-check";
@@ -26,7 +26,7 @@ const baseOptions = Object.freeze({
 	spdx: true,
 });
 
-test("newlines", async (t) => {
+suite("newlines", () => {
 	const options = baseOptions;
 
 	const testdata = {
@@ -68,13 +68,13 @@ test("newlines", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 });
 
-test("pattern", async (t) => {
+suite("pattern", () => {
 	const testdata = {
 		"pattern does match line comment": {
 			pattern: /foo.+/,
@@ -204,7 +204,7 @@ test("pattern", async (t) => {
 	};
 
 	for (const [name, testcase] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			const options = {
 				...baseOptions,
 				pattern: testcase.pattern,
@@ -214,7 +214,7 @@ test("pattern", async (t) => {
 		});
 	}
 
-	await t.test("not a regexp", async (t) => {
+	suite("not a regexp", () => {
 		const testdata = {
 			boolean: true,
 			integer: 42,
@@ -227,7 +227,7 @@ test("pattern", async (t) => {
 		};
 
 		for (const [name, pattern] of Object.entries(testdata)) {
-			await t.test(name, () => {
+			test(name, () => {
 				const options = {
 					...baseOptions,
 					pattern,
@@ -241,8 +241,8 @@ test("pattern", async (t) => {
 	});
 });
 
-test("pathological input", async (t) => {
-	await t.test("general", async (t) => {
+suite("pathological input", () => {
+	suite("general", () => {
 		const options = baseOptions;
 
 		const testdata = {
@@ -285,14 +285,14 @@ test("pathological input", async (t) => {
 		};
 
 		for (const [name, [inp, out]] of Object.entries(testdata)) {
-			await t.test(name, () => {
+			test(name, () => {
 				assert.equal(strip(inp, options), out);
 			});
 		}
 	});
 
-	await t.test("regexp", async (t) => {
-		await t.test("general", async (t) => {
+	suite("regexp", () => {
+		suite("general", () => {
 			const options = baseOptions;
 
 			const templates = {
@@ -367,9 +367,9 @@ test("pathological input", async (t) => {
 			const expressions = ["/'/", "delete /'/"];
 
 			for (const expression of expressions) {
-				await t.test(expression, async (t) => {
+				suite(expression, () => {
 					for (const [name, template] of Object.entries(templates)) {
-						await t.test(name, () => {
+						test(name, () => {
 							const out = template.replace("%s", expression);
 							const inp = `${out} // test`;
 							assert.equal(strip(inp, options), out);
@@ -379,7 +379,7 @@ test("pathological input", async (t) => {
 			}
 		});
 
-		await t.test("keywords without a space", async (t) => {
+		suite("keywords without a space", () => {
 			const options = baseOptions;
 
 			const templates = {
@@ -402,7 +402,7 @@ test("pathological input", async (t) => {
 			};
 
 			for (const [name, template] of Object.entries(templates)) {
-				await t.test(name, () => {
+				test(name, () => {
 					const out = template.replace("%s", "/'/");
 					const inp = `${out} // test`;
 					assert.equal(strip(inp, options), out);
@@ -410,10 +410,10 @@ test("pathological input", async (t) => {
 			}
 		});
 
-		await t.test("after preserved comment", async (t) => {
+		suite("after preserved comment", () => {
 			const expressions = ["/'/", "delete /'/"];
 
-			await t.test("block", async (t) => {
+			suite("block", () => {
 				const options = {
 					...baseOptions,
 					block: false,
@@ -422,7 +422,7 @@ test("pathological input", async (t) => {
 				const template = "/**/%s;";
 
 				for (const expression of expressions) {
-					await t.test(expression, async () => {
+					test(expression, () => {
 						const out = template.replace("%s", expression);
 						const inp = `${out} // test`;
 						assert.equal(strip(inp, options), out);
@@ -430,7 +430,7 @@ test("pathological input", async (t) => {
 				}
 			});
 
-			await t.test("line", async (t) => {
+			suite("line", () => {
 				const options = {
 					...baseOptions,
 					line: false,
@@ -439,7 +439,7 @@ test("pathological input", async (t) => {
 				const template = "// test\n%s;";
 
 				for (const expression of expressions) {
-					await t.test(expression, async () => {
+					test(expression, () => {
 						const out = template.replace("%s", expression);
 						const inp = `${out} /*test*/`;
 						assert.equal(strip(inp, options), out);
@@ -448,7 +448,7 @@ test("pathological input", async (t) => {
 			});
 		});
 
-		await t.test("whitespace", async (t) => {
+		suite("whitespace", () => {
 			const options = baseOptions;
 
 			const testdata = {
@@ -478,7 +478,7 @@ test("pathological input", async (t) => {
 			};
 
 			for (const [name, testcase] of Object.entries(testdata)) {
-				await t.test(name, () => {
+				test(name, () => {
 					const out = `1 + ${testcase}/'/`;
 					const inp = `${out} // test`;
 					assert.equal(strip(inp, options), out);
@@ -487,7 +487,7 @@ test("pathological input", async (t) => {
 		});
 	});
 
-	await t.test("template literal", async (t) => {
+	suite("template literal", () => {
 		const options = baseOptions;
 
 		const testdata = {
@@ -498,14 +498,14 @@ test("pathological input", async (t) => {
 		};
 
 		for (const [name, [inp, out]] of Object.entries(testdata)) {
-			await t.test(name, () => {
+			test(name, () => {
 				assert.equal(strip(inp, options), out);
 			});
 		}
 	});
 });
 
-test("invalid source code", async (t) => {
+suite("invalid source code", () => {
 	const options = baseOptions;
 
 	const testdata = {
@@ -528,13 +528,13 @@ test("invalid source code", async (t) => {
 	};
 
 	for (const [name, inp] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), inp);
 		});
 	}
 });
 
-test("preserve block comments", async (t) => {
+suite("preserve block comments", () => {
 	const options = {
 		...baseOptions,
 		block: false,
@@ -639,12 +639,12 @@ test("preserve block comments", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 
-	await t.test("any block comment", () => {
+	test("any block comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -653,7 +653,7 @@ test("preserve block comments", async (t) => {
 		);
 	});
 
-	await t.test("any line comment", () => {
+	test("any line comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -663,7 +663,7 @@ test("preserve block comments", async (t) => {
 	});
 });
 
-test("preserve JSDoc comments", async (t) => {
+suite("preserve JSDoc comments", () => {
 	const options = {
 		...baseOptions,
 		jsdoc: false,
@@ -774,12 +774,12 @@ test("preserve JSDoc comments", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 
-	await t.test("any JSDoc comment", () => {
+	test("any JSDoc comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("jsdoc"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -788,7 +788,7 @@ test("preserve JSDoc comments", async (t) => {
 		);
 	});
 
-	await t.test("any (non-JSDoc) block comment", () => {
+	test("any (non-JSDoc) block comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("non-jsdoc"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -797,7 +797,7 @@ test("preserve JSDoc comments", async (t) => {
 		);
 	});
 
-	await t.test("any line comment", () => {
+	test("any line comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -807,7 +807,7 @@ test("preserve JSDoc comments", async (t) => {
 	});
 });
 
-test("preserve license header comments", async (t) => {
+suite("preserve license header comments", () => {
 	const options = {
 		...baseOptions,
 		licenseHeader: false,
@@ -1028,12 +1028,12 @@ test("preserve license header comments", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 
-	await t.test("any license header", () => {
+	test("any license header", () => {
 		fc.assert(
 			fc.property(
 				arb.codeWithComment("license header"),
@@ -1045,7 +1045,7 @@ test("preserve license header comments", async (t) => {
 		);
 	});
 
-	await t.test("any non-license header comment", () => {
+	test("any non-license header comment", () => {
 		fc.assert(
 			fc.property(
 				arb.codeWithComment("non-license header"),
@@ -1058,7 +1058,7 @@ test("preserve license header comments", async (t) => {
 	});
 });
 
-test("preserve line comments", async (t) => {
+suite("preserve line comments", () => {
 	const options = {
 		...baseOptions,
 		line: false,
@@ -1160,12 +1160,12 @@ test("preserve line comments", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 
-	await t.test("any line comment", () => {
+	test("any line comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("line"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -1174,7 +1174,7 @@ test("preserve line comments", async (t) => {
 		);
 	});
 
-	await t.test("any block comment", () => {
+	test("any block comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("block"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -1184,7 +1184,7 @@ test("preserve line comments", async (t) => {
 	});
 });
 
-test("preserve protected comments", async (t) => {
+suite("preserve protected comments", () => {
 	const options = {
 		...baseOptions,
 		protected: false,
@@ -1403,12 +1403,12 @@ test("preserve protected comments", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 
-	await t.test("any protected comment", () => {
+	test("any protected comment", () => {
 		fc.assert(
 			fc.property(
 				arb.codeWithComment("protected"),
@@ -1423,7 +1423,7 @@ test("preserve protected comments", async (t) => {
 		);
 	});
 
-	await t.test("any non-protected comment", () => {
+	test("any non-protected comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("non-protected"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -1433,7 +1433,7 @@ test("preserve protected comments", async (t) => {
 	});
 });
 
-test("preserve sourcemap comments", async (t) => {
+suite("preserve sourcemap comments", () => {
 	const options = {
 		...baseOptions,
 		sourcemap: false,
@@ -1530,12 +1530,12 @@ test("preserve sourcemap comments", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 
-	await t.test("any sourcemap comment", () => {
+	test("any sourcemap comment", () => {
 		fc.assert(
 			fc.property(
 				arb.codeWithComment("sourcemap"),
@@ -1550,7 +1550,7 @@ test("preserve sourcemap comments", async (t) => {
 		);
 	});
 
-	await t.test("any non-sourcemap comment", () => {
+	test("any non-sourcemap comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("non-sourcemap"), ({ code, comment }) => {
 				const stripped = strip(code, options);
@@ -1560,7 +1560,7 @@ test("preserve sourcemap comments", async (t) => {
 	});
 });
 
-test("preserve SPDX ID comments", async (t) => {
+suite("preserve SPDX ID comments", () => {
 	const options = {
 		...baseOptions,
 		spdx: false,
@@ -1668,12 +1668,12 @@ test("preserve SPDX ID comments", async (t) => {
 	};
 
 	for (const [name, [inp, out]] of Object.entries(testdata)) {
-		await t.test(name, () => {
+		test(name, () => {
 			assert.equal(strip(inp, options), out);
 		});
 	}
 
-	await t.test("any SPDX short-form identifier", () => {
+	test("any SPDX short-form identifier", () => {
 		fc.assert(
 			fc.property(
 				arb.codeWithComment("spdx"),
@@ -1688,7 +1688,7 @@ test("preserve SPDX ID comments", async (t) => {
 		);
 	});
 
-	await t.test("any non-SPDX short-form identifier comment", () => {
+	test("any non-SPDX short-form identifier comment", () => {
 		fc.assert(
 			fc.property(arb.codeWithComment("non-spdx"), ({ code, comment }) => {
 				const stripped = strip(code, options);
