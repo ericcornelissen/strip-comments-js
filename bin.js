@@ -43,6 +43,7 @@ try {
 	files = positionals;
 	options = {
 		block: !values["keep-block"],
+		error: true,
 		help: values.help,
 		jsdoc: !values["keep-jsdoc"],
 		licenseHeader: values["strip-license-header"],
@@ -106,7 +107,14 @@ const promises = files.map(async (file) => {
 	}
 
 	debug("stripping comments from '%s' (length: %d)", file, content.length);
-	const stripped = stripComments(content, options);
+	let stripped;
+	try {
+		stripped = stripComments(content, options);
+	} catch (error) {
+		code = 1;
+		stderr.write(file + ": " + error.message + "\n");
+		return;
+	}
 
 	if (content.length !== stripped.length) {
 		debug("writing stripped file '%s' (length: %d)", file, stripped.length);

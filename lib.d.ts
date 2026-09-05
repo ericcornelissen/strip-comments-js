@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export type Options = {
-	/** The pattern of comments to strip. */
-	pattern?: RegExp;
-
 	/** Whether to strip block comments. */
 	block?: boolean;
+
+	/** Whether to error or return invalid code unchanged. */
+	error?: boolean;
 
 	/** Whether to strip JSDoc comments. */
 	jsdoc?: boolean;
@@ -15,6 +15,9 @@ export type Options = {
 
 	/** Whether to strip line comments. */
 	line?: boolean;
+
+	/** The pattern of comments to strip. */
+	pattern?: RegExp;
 
 	/** Whether to strip protected comments. */
 	protected?: boolean;

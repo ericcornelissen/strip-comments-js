@@ -127,7 +127,7 @@ export default defineConfig([
 			"test/no-assert-throws-call": ["error"],
 			"test/no-assert-throws-multiple-statements": ["error"],
 			"test/no-assert-throws-string": ["error"],
-			"test/no-async-describe": ["error"],
+			"test/no-async-describe": ["off"],
 			"test/no-async-fn-without-await": ["error"],
 			"test/no-callback-and-promise": ["error"],
 			"test/no-commented-tests": ["error"],
