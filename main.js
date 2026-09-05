@@ -2,6 +2,7 @@
 
 import assert from "node:assert";
 
+const jsdocLicenseExpr = /[\s*]@license\s+[\-.0-9A-Za-z]+\s*(?:\*|$)/m;
 const licenseHeaderExpr = /^!?\s*Copyright \(C\) \d+(?:-\d+)?\s/;
 const spdxExpr = /^ SPDX-License-Identifier: [\-.0-9A-Za-z]+\s*$/;
 const sourcemapExpr = /^# sourceMappingURL=/;
@@ -10,6 +11,7 @@ const whitespaceExpr =
 
 /**
  * @typedef Options
+ * @property {boolean} atlicense
  * @property {boolean} block
  * @property {boolean} licenseHeader
  * @property {boolean} line
@@ -51,12 +53,20 @@ export function strip(code, options) {
  * @returns {(comment: string) => string}
  */
 function onBlockComment(options) {
-	const { block, jsdoc, licenseHeader, pattern, protected: protect } = options;
+	const {
+		atlicense: jsdocLicense,
+		block,
+		jsdoc,
+		licenseHeader,
+		pattern,
+		protected: protect,
+	} = options;
 
 	return (comment) => {
 		let content = comment.slice(2, comment.length - 2);
 
 		const isJsdoc = content.startsWith("*");
+		const isJsdocLicense = isJsdoc && jsdocLicenseExpr.test(content);
 		const isProtected = content.startsWith("!");
 		const isLicenseHeader = licenseHeaderExpr.test(content);
 
@@ -67,13 +77,15 @@ function onBlockComment(options) {
 		const matched = pattern.test(content);
 
 		if (
-			(block &&
+			matched &&
+			((block &&
 				!isJsdoc &&
+				!isJsdocLicense &&
 				!isLicenseHeader &&
-				(protect || !isProtected) &&
-				matched) ||
-			(jsdoc && isJsdoc && matched) ||
-			(licenseHeader && isLicenseHeader && matched)
+				(protect || !isProtected)) ||
+				(jsdoc && isJsdoc && !isJsdocLicense) ||
+				(jsdocLicense && isJsdocLicense) ||
+				(licenseHeader && isLicenseHeader))
 		) {
 			return "";
 		} else {

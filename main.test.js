@@ -17,11 +17,12 @@ if (env.MUTATION_TESTING) {
 }
 
 const baseOptions = Object.freeze({
-	pattern: /[^]?/,
+	atlicense: true,
 	block: true,
 	jsdoc: true,
 	licenseHeader: true,
 	line: true,
+	pattern: /[^]?/,
 	protected: true,
 	sourcemap: true,
 	spdx: true,
@@ -876,6 +877,53 @@ suite("preserve JSDoc comments", () => {
 			}),
 		);
 	});
+});
+
+suite("preserve JSDoc license comments", () => {
+	const options = {
+		...baseOptions,
+		atlicense: false,
+	};
+
+	const testdata = {
+		"block comment": [`/* @license Apache-2.0 */`, ``],
+		"jsdoc comment, without @license": [`/** @module foo/bar */`, ``],
+		"jsdoc comment, with @license": [
+			`/** @license Apache-2.0 */`,
+			`/** @license Apache-2.0 */`,
+		],
+		"jsdoc comment, with @license, extra whitespace": [
+			`/** @license  Apache-2.0 */`,
+			`/** @license  Apache-2.0 */`,
+		],
+		"jsdoc comment, with @license, tight": [
+			`/**@license Apache-2.0*/`,
+			`/**@license Apache-2.0*/`,
+		],
+		"jsdoc comment, with @license, newline": [
+			`/**\n * @license Apache-2.0\n */`,
+			`/**\n * @license Apache-2.0\n */`,
+		],
+		"jsdoc comment, with @license, newline tight": [
+			`/**\n *@license Apache-2.0*/`,
+			`/**\n *@license Apache-2.0*/`,
+		],
+		"jsdoc comment, with @license, not quite": [
+			`/** @licenseApache-2.0 */`,
+			``,
+		],
+		"line comment": [`// @license Apache-2.0`, ``],
+		"protected comment, block": [`/*! @license Apache-2.0 */`, ``],
+		"protected comment, line": [`//! @license Apache-2.0`, ``],
+		"@license comment in line comment": [`// /** @license MIT */`, ``],
+		"@license comment in protected comment": [`//! /** @license MIT */`, ``],
+	};
+
+	for (const [name, [inp, out]] of Object.entries(testdata)) {
+		test(name, () => {
+			assert.equal(strip(inp, options), out);
+		});
+	}
 });
 
 suite("preserve license header comments", () => {
