@@ -53,4 +53,5 @@ await writeFile(manDotOne, lines.join("\n"));
 
 execSync("git commit --all --message 'version bump'");
 execSync(`git tag v${manifest.version}`);
-execSync(`git push origin main v${manifest.version}`);
+execSync(`git push origin main`);
+execSync(`git push origin v${manifest.version}`);
