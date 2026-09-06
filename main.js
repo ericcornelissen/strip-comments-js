@@ -200,7 +200,7 @@ function process(code, hooks) {
 	const result = new StringBuilder();
 	const chars = new Scanner(code + "\n");
 	$code(chars, result, hooks, null);
-	result.shrink();
+	result.pop();
 	return result.toString();
 }
 
@@ -228,8 +228,8 @@ function $blockComment(chars, result, hooks) {
 				trimEnd(result);
 
 				if (chars.peek() === "\n" || chars.peek(2) === "\r\n") {
-					if (result.last() === "\n") result.shrink();
-					if (result.last() === "\r") result.shrink();
+					if (result.last() === "\n") result.pop();
+					if (result.last() === "\r") result.pop();
 
 					if (result.isEmpty()) {
 						if (chars.next() === "\r") chars.next();
@@ -237,7 +237,7 @@ function $blockComment(chars, result, hooks) {
 					}
 				}
 			} else {
-				result.push(...outComment);
+				for (const char of outComment) result.push(char);
 			}
 
 			return;
@@ -355,10 +355,8 @@ function $lineComment(chars, result, hooks) {
 			$whitespace(chars, whitespace);
 
 			if (chars.peek(2) === "//") {
-				if (!whitespace.isEmpty()) {
-					comment.push(...whitespace.chars());
-					whitespace.clear();
-				}
+				for (const char of whitespace.chars()) comment.push(char);
+				whitespace.clear();
 			} else {
 				break;
 			}
@@ -370,18 +368,18 @@ function $lineComment(chars, result, hooks) {
 	if (outComment.length === 0) {
 		trimEnd(result);
 
-		if (result.last() === "\n") result.shrink();
-		if (result.last() === "\r") result.shrink();
+		if (result.last() === "\n") result.pop();
+		if (result.last() === "\r") result.pop();
 
 		if (!result.isEmpty() || chars.isEmpty()) {
 			if (rawComment.endsWith("\r\n")) result.push("\r");
 			result.push("\n");
 		}
 	} else {
-		result.push(...outComment);
+		for (const char of outComment) result.push(char);
 	}
 
-	if (!whitespace.isEmpty()) result.push(...whitespace.chars());
+	for (const char of whitespace.chars()) result.push(char);
 }
 
 /**
@@ -522,7 +520,7 @@ function trimEnd(string) {
 	for (let i = string.length - 1; i >= 0; i--) {
 		const cur = string.get(i);
 		if (whitespaceExpr.test(cur)) {
-			string.shrink();
+			string.pop();
 		} else {
 			break;
 		}
@@ -602,6 +600,8 @@ class StringBuilder {
 
 	/**
 	 * The current length of the string being build.
+	 *
+	 * @returns {number} The length of the string.
 	 */
 	get length() {
 		return this.#list.length;
@@ -646,22 +646,10 @@ class StringBuilder {
 	/**
 	 * Get the last character in the current string.
 	 *
-	 * @returns {string} The last character.
+	 * @returns {string | null} The last character, null if the builder is empty.
 	 */
 	last() {
-		return this.#list[this.#list.length - 1];
-	}
-
-	/**
-	 * Add one or more characters to the string.
-	 *
-	 * @param {...string} chars The character(s) to add.
-	 */
-	push(...chars) {
-		assert(chars.length > 0);
-		assert(chars.every((char) => typeof char === "string"));
-		assert(chars.every((char) => char.length === 1));
-		this.#list.push(...chars);
+		return this.#list[this.#list.length - 1] || null;
 	}
 
 	/**
@@ -675,11 +663,14 @@ class StringBuilder {
 	}
 
 	/**
-	 * Shrink the current string by 1.
+	 * Add a character to the string.
+	 *
+	 * @param {string} char The character to add.
 	 */
-	shrink() {
-		assert(this.#list.length > 0);
-		this.#list.length -= 1;
+	push(char) {
+		assert(typeof char === "string");
+		assert(char.length === 1);
+		this.#list.push(char);
 	}
 
 	/**
