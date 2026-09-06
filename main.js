@@ -273,10 +273,10 @@ function $code(chars, result, hooks, match) {
 			}
 
 			case "(": {
-				const code = result.slice(0, -1);
+				const code = result.toString();
 
 				$code(chars, result, hooks, "(");
-				if (/(?:^|\*\/|[\s);{}])(?:do|for|if|while|with)\s*$/.test(code)) {
+				if (/(?:^|\*\/|[\s);{}])(?:do|for|if|while|with)\s*\($/.test(code)) {
 					$whitespace(chars, result);
 
 					const next = chars.peek(2);
@@ -500,12 +500,12 @@ function $whitespace(chars, result) {
  */
 function startExpression(snippet) {
 	const expressionExpr =
-		/(?:^|[\n!%&(*+,\-/:;<=>?[^{|}~])[\t\v\f \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
+		/(?:^|[\n!%&(*+,\-/:;<=>?[^{|}~])[\t\v\f \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*\/$/;
 	const keywordExpressionExpr =
-		/(?:^|[\s!%&()*+,\-/:;<=>?[^{|}~])(?:await|default|delete|instanceof|new|throw|typeof|void|yield)\s*$/;
-	const keywordStatementExpr = /(?:^|[\s);{}])(?:do|else|in|of|return)\s*$/;
+		/(?:^|[\s!%&()*+,\-/:;<=>?[^{|}~])(?:await|default|delete|instanceof|new|throw|typeof|void|yield)\s*\/$/;
+	const keywordStatementExpr = /(?:^|[\s);{}])(?:do|else|in|of|return)\s*\/$/;
 
-	const s = snippet.slice(0, -1);
+	const s = snippet.toString();
 	return (
 		expressionExpr.test(s) ||
 		keywordExpressionExpr.test(s) ||
@@ -691,20 +691,6 @@ class StringBuilder {
 	shrink() {
 		assert(this.#list.length > 0);
 		this.#list.length -= 1;
-	}
-
-	/**
-	 * Extract a slice of the current string.
-	 *
-	 * If `end` is negative, it is relative to the end of the string.
-	 *
-	 * @param {number} start The start index of the slice.
-	 * @param {number} end The end index of the slice.
-	 * @returns {string} The substring from `start` to `end`.
-	 */
-	slice(start, end) {
-		assert(start >= 0 && end < this.#list.length);
-		return this.#list.slice(start, end).join("");
 	}
 
 	/**
