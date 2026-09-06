@@ -34,11 +34,15 @@ const whitespaceExpr =
  * @param {string} code The code to strip comments from.
  * @param {Options} options The options for stripping.
  * @returns {string} The stripped code.
- * @throws If `options.pattern` is not a RegExp.
+ * @throws {Error} If `code` is invalid.
+ * @throws {TypeError} If `options.pattern` is not a RegExp.
+ * @throws {RangeError} If `code` has too deeply nested constructs.
  */
 export function strip(code, options) {
 	const { pattern } = options;
-	if (!(pattern instanceof RegExp)) throw new Error("pattern must be a RegExp");
+	if (!(pattern instanceof RegExp)) {
+		throw new TypeError("pattern must be a RegExp");
+	}
 
 	const hooks = {
 		blockComment: onBlockComment(options),
@@ -204,7 +208,7 @@ function process(code, hooks) {
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Hooks} hooks
- * @throws
+ * @throws {Error}
  */
 function $blockComment(chars, result, hooks) {
 	const comment = new StringBuilder();
@@ -248,7 +252,7 @@ function $blockComment(chars, result, hooks) {
  * @param {StringBuilder} result
  * @param {Hooks} hooks
  * @param {"{" | "(" | null} match
- * @throws
+ * @throws {Error}
  */
 function $code(chars, result, hooks, match) {
 	let char;
@@ -383,7 +387,7 @@ function $lineComment(chars, result, hooks) {
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
- * @throws
+ * @throws {Error}
  */
 function $regexp(chars, result) {
 	let inCharRange = false;
@@ -417,7 +421,7 @@ function $regexp(chars, result) {
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {"'" | '"'} quote
- * @throws
+ * @throws {Error}
  */
 function $string(chars, result, quote) {
 	let char;
@@ -442,7 +446,7 @@ function $string(chars, result, quote) {
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
  * @param {Hooks} hooks
- * @throws
+ * @throws {Error}
  */
 function $template(chars, result, hooks) {
 	let char;
@@ -473,7 +477,6 @@ function $template(chars, result, hooks) {
 /**
  * @param {Scanner<string>} chars
  * @param {StringBuilder} result
- * @returns {string | null}
  */
 function $whitespace(chars, result) {
 	let char;
@@ -489,6 +492,9 @@ function $whitespace(chars, result) {
 }
 
 /**
+ * Determine if the end of the provided snippet is the start of a new
+ * expression.
+ *
  * @param {StringBuilder} snippet The program up to this point.
  * @returns {boolean} If this point in the program is the start of an expression.
  */
@@ -566,7 +572,6 @@ class Scanner {
 	 *
 	 * @param {number} [n=1] How many characters to look ahead.
 	 * @returns {T} The next (up-to) n elements.
-	 * @throws {Error} The requested number of elements is less than 1.
 	 */
 	peek(n = 1) {
 		assert(n > 0);
@@ -577,7 +582,6 @@ class Scanner {
 	 * Inspect the previous element in the list.
 	 *
 	 * @returns {T} The previous element.
-	 * @throws {Error} The current scanner position is 0.
 	 */
 	prev() {
 		const idx = this.#idx - 2;
@@ -587,8 +591,6 @@ class Scanner {
 
 	/**
 	 * Undo the last call of next.
-	 *
-	 * @throws {Error} The current scanner position is 0.
 	 */
 	undo() {
 		assert(this.#idx > 0);
@@ -637,7 +639,6 @@ class StringBuilder {
 	 *
 	 * @param {number} idx The index of the character to get.
 	 * @returns {string} The character at `idx`.
-	 * @throws {Error} if `idx` is out of range.
 	 */
 	get(idx) {
 		assert(idx >= 0 && idx < this.#list.length);
@@ -666,9 +667,6 @@ class StringBuilder {
 	 * Add one or more characters to the string.
 	 *
 	 * @param {...string} chars The character(s) to add.
-	 * @throws {Error} No characters have been provided.
-	 * @throws {Error} At least one of `chars` is not a string.
-	 * @throws {Error} At least one of `chars` is not a character.
 	 */
 	push(...chars) {
 		assert(chars.length > 0);
@@ -681,7 +679,6 @@ class StringBuilder {
 	 * Remove the last character from the current string.
 	 *
 	 * @returns {string} The last character in the string.
-	 * @throws {Error} The current string is empty.
 	 */
 	pop() {
 		assert(this.#list.length > 0);
@@ -690,8 +687,6 @@ class StringBuilder {
 
 	/**
 	 * Shrink the current string by 1.
-	 *
-	 * @throws {Error} The current string is empty.
 	 */
 	shrink() {
 		assert(this.#list.length > 0);
@@ -706,7 +701,6 @@ class StringBuilder {
 	 * @param {number} start The start index of the slice.
 	 * @param {number} end The end index of the slice.
 	 * @returns {string} The substring from `start` to `end`.
-	 * @throws {Error} Either `start` or `end` is out of bounds.
 	 */
 	slice(start, end) {
 		assert(start >= 0 && end < this.#list.length);

@@ -249,9 +249,12 @@ suite("pattern", () => {
 					pattern,
 				};
 
-				assert.throws(() => {
-					strip("this is not fine", options);
-				}, /^Error: pattern must be a RegExp$/);
+				assert.throws(
+					() => {
+						strip("this is not fine", options);
+					},
+					{ name: "TypeError", message: "pattern must be a RegExp" },
+				);
 			});
 		}
 	});

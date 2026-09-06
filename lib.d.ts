@@ -38,5 +38,8 @@ export type Options = {
  * @param code The code to strip comments from.
  * @param options The options for stripping.
  * @return The stripped code.
+ * @throws {Error} If the provided code is invalid.
+ * @throws {TypeError} If the provided pattern is not a RegExp.
+ * @throws {RangeError} If the provided code has too deeply nested constructs.
  */
 export function stripComments(code: string, options?: Options): string;
