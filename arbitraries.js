@@ -35,7 +35,7 @@ function commentArbitrary(type) {
 		case "block":
 			return javascript.comment
 				.block()
-				.map((s) => s.replace(/^(\s*\/\*)(!|\*(?!\/))/, "$1"));
+				.map((s) => s.replace(/^(\s*\/\*)(!|\*(?!\/))+/, "$1"));
 		case "jsdoc":
 			return javascript.comment
 				.block()
