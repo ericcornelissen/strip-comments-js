@@ -78,6 +78,7 @@
     "package": "strip-assertions ./*.js && ./bin.js --keep-jsdoc lib.d.ts lib.js && ./bin.js bin.js main.js",
     "test": "npm-run-all test:*",
     "test:bin": "node --test 'bin.test.js'",
+    "test:lib": "node --test 'lib.test.js'",
     "test:unit": "node --test 'main.test.js'",
     "mutation": "stryker run .stryker.js",
     "verify": "npm run check && npm run test",
