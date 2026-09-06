@@ -205,7 +205,7 @@ function process(code, hooks) {
 }
 
 /**
- * @param {Scanner<string>} chars
+ * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Hooks} hooks
  * @throws {Error}
@@ -248,7 +248,7 @@ function $blockComment(chars, result, hooks) {
 }
 
 /**
- * @param {Scanner<string>} chars
+ * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Hooks} hooks
  * @param {"{" | "(" | null} match
@@ -339,7 +339,7 @@ function $code(chars, result, hooks, match) {
 }
 
 /**
- * @param {Scanner<string>} chars
+ * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Options} options
  */
@@ -374,7 +374,7 @@ function $lineComment(chars, result, hooks) {
 		if (result.last() === "\r") result.shrink();
 
 		if (!result.isEmpty() || chars.isEmpty()) {
-			if (chars.prev() === "\r") result.push("\r");
+			if (rawComment.endsWith("\r\n")) result.push("\r");
 			result.push("\n");
 		}
 	} else {
@@ -385,7 +385,7 @@ function $lineComment(chars, result, hooks) {
 }
 
 /**
- * @param {Scanner<string>} chars
+ * @param {Scanner} chars
  * @param {StringBuilder} result
  * @throws {Error}
  */
@@ -418,7 +418,7 @@ function $regexp(chars, result) {
 }
 
 /**
- * @param {Scanner<string>} chars
+ * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {"'" | '"'} quote
  * @throws {Error}
@@ -443,7 +443,7 @@ function $string(chars, result, quote) {
 }
 
 /**
- * @param {Scanner<string>} chars
+ * @param {Scanner} chars
  * @param {StringBuilder} result
  * @param {Hooks} hooks
  * @throws {Error}
@@ -475,7 +475,7 @@ function $template(chars, result, hooks) {
 }
 
 /**
- * @param {Scanner<string>} chars
+ * @param {Scanner} chars
  * @param {StringBuilder} result
  */
 function $whitespace(chars, result) {
@@ -530,20 +530,19 @@ function trimEnd(string) {
 }
 
 /**
- * A one-way scanner over a list.
- *
- * @template T
+ * A one-way scanner over a string.
  */
 class Scanner {
 	#list;
 	#idx;
 
 	/**
-	 * Initialize a new scanner for a list.
+	 * Initialize a new scanner for a string.
 	 *
-	 * @param {T[]} list The list to create a scanner for.
+	 * @param {string} list The string to create a scanner for.
 	 */
 	constructor(list) {
+		assert(typeof list === "string");
 		this.#list = list;
 		this.#idx = 0;
 	}
@@ -558,35 +557,25 @@ class Scanner {
 	}
 
 	/**
-	 * Consume the next element.
+	 * Consume the next character.
 	 *
-	 * @returns {T | null} The next element, or null if the scanner finished.
+	 * @returns {string | null} The next character, null if the scanner finished.
 	 */
 	next() {
+		assert(this.#idx <= this.#list.length);
 		const idx = this.#idx++;
 		return this.#list[idx] || null;
 	}
 
 	/**
-	 * Preview the next n elements
+	 * Preview the next n characters.
 	 *
 	 * @param {number} [n=1] How many characters to look ahead.
-	 * @returns {T} The next (up-to) n elements.
+	 * @returns {string} The next (up-to) n characters.
 	 */
 	peek(n = 1) {
 		assert(n > 0);
 		return this.#list.slice(this.#idx, this.#idx + n);
-	}
-
-	/**
-	 * Inspect the previous element in the list.
-	 *
-	 * @returns {T} The previous element.
-	 */
-	prev() {
-		const idx = this.#idx - 2;
-		assert(idx >= 0);
-		return this.#list[idx];
 	}
 
 	/**
