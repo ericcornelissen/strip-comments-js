@@ -519,6 +519,17 @@ suite("pathological input", () => {
 			});
 		}
 	});
+
+	test("stack depth", () => {
+		const n = 9999;
+		const code = "{".repeat(n) + "}".repeat(n);
+		assert.throws(
+			() => {
+				strip(code, baseOptions);
+			},
+			{ name: "RangeError", message: "Maximum call stack size exceeded" },
+		);
+	});
 });
 
 suite("invalid source code", () => {
