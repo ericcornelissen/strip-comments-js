@@ -6,5 +6,8 @@ packs:
   - githubsecuritylab/codeql-javascript-libs@0.7.7
   - githubsecuritylab/codeql-javascript-queries@0.7.7
 
+paths-ignore:
+  - testdata/**
+
 queries:
   - uses: security-extended
