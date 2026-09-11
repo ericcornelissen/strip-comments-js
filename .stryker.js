@@ -10,7 +10,6 @@ export default {
 	inPlace: false,
 
 	mutate: ["main.js"],
-	plugins: ["@stryker-mutator/*", "./script/stryker-ignore-assert.js"],
 
 	testRunner: "tap",
 	tap: {
@@ -20,8 +19,6 @@ export default {
 
 	timeoutFactor: 1.5,
 	timeoutMS: 5_000,
-
-	ignorers: ["assert"],
 
 	incremental: true,
 	incrementalFile: ".cache/mutation.json",
