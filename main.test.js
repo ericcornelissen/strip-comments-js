@@ -714,6 +714,7 @@ suite("preserve block comments", () => {
 			`/* bar */`,
 		],
 		"jsdoc comment": [`/** foobar */`, ``],
+		"jsdoc license comment": [`/** @license Apache-2.0 */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
@@ -849,6 +850,7 @@ suite("preserve JSDoc comments", () => {
 			`// SPDX-License-Identifier: Apache-2.0\n/** bar */`,
 			`/** bar */`,
 		],
+		"jsdoc license comment": [`/** @license Apache-2.0 */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
@@ -950,6 +952,7 @@ suite("preserve license header comments", () => {
 	const testdata = {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
+		"jsdoc license comment": [`/** @license Apache-2.0 */`, ``],
 		"license block header": [
 			`/* Copyright (C) 2025  Kip */`,
 			`/* Copyright (C) 2025  Kip */`,
@@ -1201,6 +1204,7 @@ suite("preserve line comments", () => {
 	const testdata = {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
+		"jsdoc license comment": [`/** @license Apache-2.0 */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
@@ -1327,6 +1331,7 @@ suite("preserve protected comments", () => {
 	const testdata = {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
+		"jsdoc license comment": [`/** @license Apache-2.0 */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
@@ -1576,6 +1581,7 @@ suite("preserve sourcemap comments", () => {
 	const testdata = {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
+		"jsdoc license comment": [`/** @license Apache-2.0 */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
@@ -1703,6 +1709,7 @@ suite("preserve SPDX ID comments", () => {
 	const testdata = {
 		"block comment": [`/* foobar */`, ``],
 		"jsdoc comment": [`/** foobar */`, ``],
+		"jsdoc license comment": [`/** @license Apache-2.0 */`, ``],
 		"license header, block": [`/* Copyright (C) 2026  Henk */`, ``],
 		"license header, block protected": [`/*! Copyright (C) 2026  Henk */`, ``],
 		"license header, line": [`// Copyright (C) 2026  Henk`, ``],
