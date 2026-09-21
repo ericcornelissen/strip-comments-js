@@ -10,7 +10,7 @@ permissions: read-all
 jobs:
   check:
     name: ${{ matrix.what }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +37,7 @@ jobs:
         run: npm run "check:${WHAT}"
   codeql:
     name: CodeQL (${{ matrix.what }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       security-events: write # To upload CodeQL results
     strategy:
@@ -60,7 +60,7 @@ jobs:
         uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
   dogfeed:
     name: Dogfeed
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - test
     steps:
@@ -79,7 +79,7 @@ jobs:
         run: npm run dogfeed
   mutation:
     name: Mutation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - test
     steps:
@@ -104,7 +104,7 @@ jobs:
         run: npm run mutation
   test:
     name: Test
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
