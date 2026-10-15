@@ -1460,11 +1460,9 @@ test("syntax", () => {
 			}
 
 			const stripped = strip(code, options);
-			try {
+			assert.doesNotThrow(() => {
 				acorn.parse(stripped, { ecmaVersion: "latest" });
-			} catch (error) {
-				assert.fail(`${error} in:\n\n\`${code}\`\n\n***\n\n\`${stripped}\``);
-			}
+			});
 		}),
 	);
 });
